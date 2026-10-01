@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16
+    container_name: lol-tracker-db
+    environment:
+      POSTGRES_USER: lol
+      POSTGRES_PASSWORD: lol
+      POSTGRES_DB: lol_tracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  postgres_data:
