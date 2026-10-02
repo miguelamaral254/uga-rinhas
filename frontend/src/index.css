@@ -1,12 +1,21 @@
 :root {
   --lol-bg: #0a0e14;
   --lol-surface: #161b22;
+  --lol-surface-2: #1d2430;
   --lol-border: #2a313c;
+  --lol-border-gold: #4a4024;
   --lol-text: #e6e6e6;
   --lol-text-muted: #8b949e;
   --lol-gold: #c8aa6e;
+  --lol-gold-light: #f0e6d2;
+  --lol-gold-dark: #785a28;
+  --lol-blue: #0ac8b9;
   --lol-win: #3fb950;
   --lol-loss: #f85149;
+  --lol-silver: #a8b4bf;
+  --lol-bronze: #cd7f4f;
+  --font-display: 'Cinzel', 'Georgia', serif;
+  --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
 }
 
 * {
@@ -15,9 +24,48 @@
 
 body {
   margin: 0;
-  background: var(--lol-bg);
+  background:
+    radial-gradient(ellipse 900px 520px at 12% -8%, rgba(10, 200, 185, 0.07), transparent 60%),
+    radial-gradient(ellipse 900px 600px at 100% 0%, rgba(200, 170, 110, 0.08), transparent 55%),
+    var(--lol-bg);
+  background-attachment: fixed;
   color: var(--lol-text);
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+}
+
+h1 {
+  position: relative;
+  margin: 0 0 1.6rem;
+  padding-bottom: 0.65rem;
+  font-weight: 700;
+  font-size: 1.9rem;
+  letter-spacing: 0.02em;
+  color: var(--lol-gold-light);
+  text-shadow: 0 0 24px rgba(200, 170, 110, 0.2);
+}
+
+h1::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 54px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--lol-gold), transparent);
+}
+
+h2 {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--lol-gold);
+  font-weight: 600;
 }
 
 .loading-screen {
@@ -32,8 +80,10 @@ body {
   justify-content: space-between;
   height: 4rem;
   padding: 0 1.25rem;
-  background: var(--lol-bg);
-  border-bottom: 1px solid var(--lol-border);
+  background: linear-gradient(180deg, rgba(17, 22, 30, 0.97), rgba(10, 14, 20, 0.99));
+  border-bottom: 1px solid var(--lol-border-gold);
+  box-shadow: 0 1px 0 rgba(200, 170, 110, 0.12), 0 6px 18px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
   position: sticky;
   top: 0;
   z-index: 40;
@@ -46,9 +96,21 @@ body {
 }
 
 .lol-navbar-brand {
+  font-family: var(--font-display);
   font-weight: 700;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: linear-gradient(180deg, var(--lol-gold-light), var(--lol-gold) 60%, var(--lol-gold-dark));
+  -webkit-background-clip: text;
+  background-clip: text;
   color: var(--lol-gold);
-  letter-spacing: 0.05em;
+}
+
+@supports (-webkit-background-clip: text) {
+  .lol-navbar-brand {
+    -webkit-text-fill-color: transparent;
+  }
 }
 
 .lol-navbar-account {
@@ -89,8 +151,9 @@ body {
   left: 0;
   height: 100vh;
   width: 280px;
-  background: var(--lol-surface);
+  background: linear-gradient(170deg, var(--lol-surface-2), var(--lol-surface) 60%);
   border-right: 1px solid var(--lol-border);
+  border-top: 2px solid var(--lol-gold);
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
   padding: 1.25rem;
   display: flex;
@@ -183,16 +246,33 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--lol-surface);
-  border: 1px solid var(--lol-border);
-  color: var(--lol-text);
-  padding: 0.5rem 1rem;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  font-size: 0.85rem;
+  background: linear-gradient(180deg, var(--lol-gold-light), var(--lol-gold) 55%, var(--lol-gold-dark));
+  border: 1px solid var(--lol-gold-dark);
+  color: #0a0e14;
+  padding: 0.65rem 1.25rem;
   border-radius: 6px;
   cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: filter 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.lol-sync-button:hover:not(:disabled) {
+  filter: brightness(1.08);
+  box-shadow: 0 4px 16px rgba(200, 170, 110, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.lol-sync-button:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .lol-sync-button:disabled {
-  opacity: 0.6;
+  filter: grayscale(0.5) brightness(0.75);
+  box-shadow: none;
   cursor: default;
 }
 
@@ -224,12 +304,18 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
-  background: var(--lol-surface);
+  background: linear-gradient(145deg, var(--lol-surface-2), var(--lol-surface));
   border: 1px solid var(--lol-border);
   border-radius: 8px;
   padding: 1rem;
   text-decoration: none;
   color: var(--lol-text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lol-player-card:hover {
+  border-color: var(--lol-border-gold);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .lol-player-rank {
@@ -284,11 +370,16 @@ body {
 
 .lol-player-form button {
   padding: 0.6rem 1.2rem;
-  background: var(--lol-gold);
-  border: none;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: linear-gradient(180deg, var(--lol-gold-light), var(--lol-gold) 55%, var(--lol-gold-dark));
+  border: 1px solid var(--lol-gold-dark);
+  color: #0a0e14;
   border-radius: 6px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .lol-form-error {
@@ -407,7 +498,10 @@ body {
 
 .lol-profile-name {
   margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
   font-size: 1.6rem;
+  color: var(--lol-gold-light);
 }
 
 .lol-profile-riot-id {
@@ -424,9 +518,10 @@ body {
   display: flex;
   align-items: center;
   gap: 1.25rem;
-  padding: 1rem 0;
-  border-top: 1px solid var(--lol-border);
-  border-bottom: 1px solid var(--lol-border);
+  padding: 1.1rem 1.5rem;
+  background: linear-gradient(145deg, var(--lol-surface-2), var(--lol-surface));
+  border: 1px solid var(--lol-border);
+  border-radius: 10px;
   margin-bottom: 2rem;
   flex-wrap: wrap;
 }
@@ -467,7 +562,7 @@ body {
 
 .lol-profile-section h2 {
   font-size: 1rem;
-  color: var(--lol-text-muted);
+  color: var(--lol-gold);
   font-weight: 600;
   margin: 0 0 0.9rem;
 }
@@ -561,12 +656,17 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--lol-surface);
+  background: linear-gradient(145deg, var(--lol-surface-2), var(--lol-surface));
   border: 1px solid var(--lol-border);
   border-radius: 6px;
   padding: 0.5rem 0.75rem;
   margin-bottom: 1rem;
   color: var(--lol-text-muted);
+  transition: border-color 0.15s ease;
+}
+
+.lol-search-bar:focus-within {
+  border-color: var(--lol-gold-dark);
 }
 
 .lol-search-bar input {
@@ -710,6 +810,36 @@ body {
 
 .lol-group-header-main {
   min-width: 0;
+  background: linear-gradient(145deg, var(--lol-surface-2), var(--lol-surface));
+  border: 1px solid var(--lol-border);
+  border-left: 3px solid var(--lol-gold);
+  border-radius: 8px;
+  padding: 1.1rem 1.4rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+}
+
+.lol-group-header-main h1 {
+  margin-bottom: 0.5rem;
+  padding-bottom: 0;
+}
+
+.lol-group-header-main h1::after {
+  display: none;
+}
+
+.lol-group-header-main .lol-lobby-subtitle {
+  margin: 0;
+}
+
+.lol-group-header-main .lol-lobby-subtitle strong {
+  color: var(--lol-gold-light);
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  letter-spacing: 0.08em;
+}
+
+.lol-group-header-main .lol-leave-button {
+  margin-bottom: 0;
+  margin-top: 0.9rem;
 }
 
 .lol-group-title-row {
@@ -737,7 +867,7 @@ body {
   padding: 0.6rem 0.9rem;
   border-radius: 8px;
   border: 1px solid var(--lol-border);
-  background: var(--lol-surface);
+  background: linear-gradient(145deg, var(--lol-surface-2), var(--lol-surface));
   min-width: 84px;
 }
 
@@ -745,6 +875,23 @@ body {
   border-color: var(--lol-gold);
   padding-top: 0.9rem;
   padding-bottom: 0.9rem;
+  box-shadow: 0 0 20px rgba(200, 170, 110, 0.25);
+}
+
+.lol-podium-slot--second {
+  border-color: var(--lol-silver);
+}
+
+.lol-podium-slot--third {
+  border-color: var(--lol-bronze);
+}
+
+.lol-podium-slot--second .lol-podium-rank {
+  color: var(--lol-silver);
+}
+
+.lol-podium-slot--third .lol-podium-rank {
+  color: var(--lol-bronze);
 }
 
 .lol-podium-crown {
@@ -752,8 +899,10 @@ body {
 }
 
 .lol-podium-rank {
+  font-family: var(--font-display);
   font-size: 0.75rem;
-  color: var(--lol-text-muted);
+  color: var(--lol-gold);
+  font-weight: 700;
 }
 
 .lol-podium-name {
@@ -983,6 +1132,12 @@ body {
 .lol-auth {
   max-width: 360px;
   margin: 2rem auto;
+  background: linear-gradient(160deg, var(--lol-surface-2), var(--lol-surface));
+  border: 1px solid var(--lol-border);
+  border-top: 2px solid var(--lol-gold);
+  border-radius: 10px;
+  padding: 1.75rem 1.75rem 2rem;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
 }
 
 .lol-auth-form {
@@ -1002,12 +1157,23 @@ body {
 }
 
 .lol-auth-form button {
-  padding: 0.6rem;
-  background: var(--lol-gold);
-  border: none;
+  padding: 0.7rem;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: linear-gradient(180deg, var(--lol-gold-light), var(--lol-gold) 55%, var(--lol-gold-dark));
+  border: 1px solid var(--lol-gold-dark);
+  color: #0a0e14;
   border-radius: 6px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.lol-auth-form button:disabled {
+  filter: grayscale(0.5) brightness(0.75);
+  box-shadow: none;
+  cursor: default;
 }
 
 .lol-auth-switch {
@@ -1048,12 +1214,17 @@ body {
   align-items: center;
   gap: 0.4rem;
   padding: 0.6rem 1rem;
-  background: var(--lol-gold);
-  border: none;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: linear-gradient(180deg, var(--lol-gold-light), var(--lol-gold) 55%, var(--lol-gold-dark));
+  border: 1px solid var(--lol-gold-dark);
+  color: #0a0e14;
   border-radius: 6px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .lol-group-list {
@@ -1069,12 +1240,19 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--lol-surface);
+  background: linear-gradient(145deg, var(--lol-surface-2), var(--lol-surface));
   border: 1px solid var(--lol-border);
+  border-left: 3px solid var(--lol-gold-dark);
   border-radius: 8px;
   padding: 1rem;
   text-decoration: none;
   color: var(--lol-text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lol-group-card:hover {
+  border-left-color: var(--lol-gold);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .lol-group-name {
@@ -1084,6 +1262,7 @@ body {
 .lol-group-code {
   color: var(--lol-text-muted);
   font-size: 0.85rem;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
 }
 
 /* Group matches */
@@ -1197,12 +1376,14 @@ body {
 }
 
 .lol-modal {
-  background: var(--lol-surface);
+  background: linear-gradient(160deg, var(--lol-surface-2), var(--lol-surface));
   border: 1px solid var(--lol-border);
+  border-top: 2px solid var(--lol-gold);
   border-radius: 10px;
   width: 100%;
   max-width: 380px;
   padding: 1.5rem;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
 }
 
 .lol-modal-header {
