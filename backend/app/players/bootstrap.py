@@ -25,6 +25,21 @@ _ADD_SUMMONER_LEVEL_COLUMN = text("""
     ALTER TABLE lol.players ADD COLUMN IF NOT EXISTS summoner_level INT
 """)
 
+_ADD_USERNAME_COLUMN = text("""
+    ALTER TABLE lol.players ADD COLUMN IF NOT EXISTS username TEXT
+""")
+
+_ADD_USERNAME_UNIQUE = text("""
+    DO $$ BEGIN
+        ALTER TABLE lol.players ADD CONSTRAINT players_username_key UNIQUE (username);
+    EXCEPTION WHEN duplicate_object OR duplicate_table THEN NULL;
+    END $$
+""")
+
+_ADD_PASSWORD_HASH_COLUMN = text("""
+    ALTER TABLE lol.players ADD COLUMN IF NOT EXISTS password_hash TEXT
+""")
+
 
 async def ensure_players_table(engine: AsyncEngine) -> None:
     async with engine.begin() as conn:
@@ -32,3 +47,6 @@ async def ensure_players_table(engine: AsyncEngine) -> None:
         await conn.execute(_CREATE_PLAYERS_TABLE)
         await conn.execute(_ADD_PROFILE_ICON_COLUMN)
         await conn.execute(_ADD_SUMMONER_LEVEL_COLUMN)
+        await conn.execute(_ADD_USERNAME_COLUMN)
+        await conn.execute(_ADD_USERNAME_UNIQUE)
+        await conn.execute(_ADD_PASSWORD_HASH_COLUMN)

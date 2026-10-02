@@ -1,0 +1,98 @@
+import uuid
+from dataclasses import dataclass
+
+from sqlalchemy import bindparam, text
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.ext.asyncio import AsyncSession
+
+
+@dataclass(frozen=True)
+class Group:
+    id: uuid.UUID
+    name: str
+    join_code: str
+    created_by: uuid.UUID
+
+
+@dataclass(frozen=True)
+class GroupMember:
+    id: uuid.UUID
+    display_name: str
+    riot_game_name: str
+    riot_tag_line: str
+
+
+class GroupRepository:
+    def __init__(self, session: AsyncSession):
+        self._session = session
+
+    async def save(self, group: Group) -> None:
+        await self._session.execute(
+            text("""
+                INSERT INTO lol.groups (id, name, join_code, created_by)
+                VALUES (:id, :name, :join_code, :created_by)
+            """),
+            {
+                "id": group.id,
+                "name": group.name,
+                "join_code": group.join_code,
+                "created_by": group.created_by,
+            },
+        )
+        await self._session.commit()
+
+    async def add_member(self, group_id: uuid.UUID, player_id: uuid.UUID) -> None:
+        await self._session.execute(
+            text("""
+                INSERT INTO lol.group_members (group_id, player_id)
+                VALUES (:group_id, :player_id)
+                ON CONFLICT (group_id, player_id) DO NOTHING
+            """),
+            {"group_id": group_id, "player_id": player_id},
+        )
+        await self._session.commit()
+
+    async def find_by_id(self, group_id: uuid.UUID) -> Group | None:
+        query = text("""
+            SELECT id, name, join_code, created_by FROM lol.groups WHERE id = :id
+        """).bindparams(bindparam("id", type_=PG_UUID(as_uuid=True)))
+        result = await self._session.execute(query, {"id": group_id})
+        row = result.first()
+        return Group(**row._mapping) if row else None
+
+    async def find_by_join_code(self, join_code: str) -> Group | None:
+        result = await self._session.execute(
+            text("SELECT id, name, join_code, created_by FROM lol.groups WHERE join_code = :code"),
+            {"code": join_code},
+        )
+        row = result.first()
+        return Group(**row._mapping) if row else None
+
+    async def is_member(self, group_id: uuid.UUID, player_id: uuid.UUID) -> bool:
+        query = text("""
+            SELECT 1 FROM lol.group_members WHERE group_id = :group_id AND player_id = :player_id
+        """).bindparams(bindparam("group_id", type_=PG_UUID(as_uuid=True)))
+        result = await self._session.execute(query, {"group_id": group_id, "player_id": player_id})
+        return result.first() is not None
+
+    async def list_members(self, group_id: uuid.UUID) -> list[GroupMember]:
+        query = text("""
+            SELECT p.id, p.display_name, p.riot_game_name, p.riot_tag_line
+            FROM lol.group_members gm
+            JOIN lol.players p ON p.id = gm.player_id
+            WHERE gm.group_id = :group_id
+            ORDER BY p.display_name
+        """).bindparams(bindparam("group_id", type_=PG_UUID(as_uuid=True)))
+        result = await self._session.execute(query, {"group_id": group_id})
+        return [GroupMember(**row._mapping) for row in result]
+
+    async def list_for_player(self, player_id: uuid.UUID) -> list[Group]:
+        query = text("""
+            SELECT g.id, g.name, g.join_code, g.created_by
+            FROM lol.group_members gm
+            JOIN lol.groups g ON g.id = gm.group_id
+            WHERE gm.player_id = :player_id
+            ORDER BY g.name
+        """).bindparams(bindparam("player_id", type_=PG_UUID(as_uuid=True)))
+        result = await self._session.execute(query, {"player_id": player_id})
+        return [Group(**row._mapping) for row in result]

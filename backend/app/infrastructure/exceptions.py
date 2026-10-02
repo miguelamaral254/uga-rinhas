@@ -17,6 +17,14 @@ class ValidationError(ApiError):
     """Business rule violation (HTTP 400)."""
 
 
+class UnauthorizedError(ApiError):
+    """Missing or invalid session token (HTTP 401)."""
+
+
+class ForbiddenError(ApiError):
+    """Authenticated, but not allowed to do this (HTTP 403)."""
+
+
 class ResourceNotFoundError(ApiError):
     """Entity not found (HTTP 404)."""
 
@@ -31,6 +39,8 @@ class RiotApiUnavailableError(ApiError):
 
 _STATUS_CODE_BY_EXCEPTION: dict[type[ApiError], int] = {
     ValidationError: 400,
+    UnauthorizedError: 401,
+    ForbiddenError: 403,
     ResourceNotFoundError: 404,
     ConflictError: 409,
     RiotApiUnavailableError: 502,

@@ -4,6 +4,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.auth.bootstrap import ensure_sessions_table
+from app.auth.router import router as auth_router
+from app.group_matches.bootstrap import ensure_group_matches_table
+from app.group_matches.router import router as group_matches_router
+from app.groups.bootstrap import ensure_groups_tables
+from app.groups.router import router as groups_router
 from app.health.router import router as health_router
 from app.infrastructure.config import get_settings
 from app.infrastructure.database import engine
@@ -21,6 +27,9 @@ settings = get_settings()
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await ensure_players_table(engine)
     await ensure_matches_tables(engine)
+    await ensure_sessions_table(engine)
+    await ensure_groups_tables(engine)
+    await ensure_group_matches_table(engine)
     start_scheduler()
     yield
     stop_scheduler()
@@ -41,8 +50,11 @@ def create_app() -> FastAPI:
     register_exception_handlers(app)
 
     app.include_router(health_router)
+    app.include_router(auth_router)
     app.include_router(players_router)
     app.include_router(matches_router)
+    app.include_router(groups_router)
+    app.include_router(group_matches_router)
 
     return app
 

@@ -1,54 +1,43 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { playersService } from '../services/playersService';
-import { PlayerForm } from '../components/players/PlayerForm';
 import { PlayerCard } from '../components/players/PlayerCard';
+import { SearchBar } from '../components/common/SearchBar';
+import { PaginatedGrid } from '../components/common/PaginatedGrid';
 
 const Players = () => {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
-
-  const fetchPlayers = async () => {
-    try {
-      setPlayers(await playersService.list());
-    } catch (err) {
-      console.error('Error loading players:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
-    fetchPlayers();
+    playersService
+      .list()
+      .then(setPlayers)
+      .catch((err) => console.error('Error loading players:', err))
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleRegister = async ({ displayName, riotGameName, riotTagLine }) => {
-    setSaving(true);
-    setError(null);
-    try {
-      await playersService.register({ displayName, riotGameName, riotTagLine });
-      await fetchPlayers();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Não foi possível adicionar o jogador.');
-    } finally {
-      setSaving(false);
-    }
-  };
+  const filteredPlayers = useMemo(() => {
+    if (!query) return players;
+    const q = query.toLowerCase();
+    return players.filter(
+      (p) => p.display_name.toLowerCase().includes(q) || p.riot_game_name.toLowerCase().includes(q)
+    );
+  }, [players, query]);
 
   if (loading) return <div className="loading-screen">Carregando jogadores...</div>;
 
   return (
     <div className="lol-players">
       <h1>Jogadores</h1>
-      <PlayerForm onSubmit={handleRegister} loading={saving} />
-      {error && <p className="lol-form-error">{error}</p>}
-
-      <div className="lol-player-list">
-        {players.map((player, index) => (
+      <SearchBar placeholder="Buscar jogador..." onSearch={setQuery} />
+      <PaginatedGrid
+        items={filteredPlayers}
+        emptyMessage="Nenhum jogador encontrado."
+        renderItem={(player, index) => (
           <PlayerCard key={player.id} player={player} rank={index + 1} />
-        ))}
-      </div>
+        )}
+      />
     </div>
   );
 };
