@@ -1,47 +1,76 @@
-import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { Swords, Users, UsersRound, UserCog, LogOut, LogIn } from 'lucide-react';
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, Swords, Users, UsersRound, UserCog, LogIn, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 export const Navbar = () => {
   const { account, logout } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const closeMenu = () => setIsMenuOpen(false);
 
   const handleLogout = () => {
     logout();
+    closeMenu();
     navigate('/login');
   };
 
+  const links = [
+    { to: '/', label: 'Placar', icon: Swords },
+    { to: '/players', label: 'Jogadores', icon: Users },
+    ...(account
+      ? [
+          { to: '/groups', label: 'Grupos', icon: UsersRound },
+          { to: '/profile', label: 'Perfil', icon: UserCog },
+        ]
+      : [{ to: '/login', label: 'Entrar', icon: LogIn }]),
+  ];
+
+  const DrawerLink = ({ to, label, icon: Icon }) => (
+    <Link to={to} className={`lol-drawer-link${pathname === to ? ' is-active' : ''}`} onClick={closeMenu}>
+      <Icon size={17} />
+      {label}
+    </Link>
+  );
+
   return (
-    <nav className="lol-navbar">
-      <span className="lol-navbar-brand">Uga Rinhas</span>
-      <div className="lol-navbar-links">
-        <NavLink to="/" end className="lol-navbar-link">
-          <Swords size={16} /> Placar
-        </NavLink>
-        <NavLink to="/players" className="lol-navbar-link">
-          <Users size={16} /> Jogadores
-        </NavLink>
-        {account && (
-          <NavLink to="/groups" className="lol-navbar-link">
-            <UsersRound size={16} /> Grupos
-          </NavLink>
-        )}
-        {account && (
-          <NavLink to="/profile" className="lol-navbar-link">
-            <UserCog size={16} /> Perfil
-          </NavLink>
-        )}
-        {account ? (
-          <button className="lol-navbar-link lol-navbar-logout" onClick={handleLogout}>
-            <LogOut size={16} /> Sair ({account.display_name})
+    <>
+      {isMenuOpen && <div className="lol-drawer-backdrop" onClick={closeMenu} />}
+
+      <div className={`lol-drawer${isMenuOpen ? '' : ' is-closed'}`}>
+        <div className="lol-drawer-header">
+          <span className="lol-navbar-brand">Uga Rinhas</span>
+          <button type="button" className="lol-nav-icon-btn" onClick={closeMenu} aria-label="Fechar menu">
+            <X size={20} />
           </button>
-        ) : (
-          <NavLink to="/login" className="lol-navbar-link">
-            <LogIn size={16} /> Entrar
-          </NavLink>
+        </div>
+
+        {links.map((link) => (
+          <DrawerLink key={link.to} {...link} />
+        ))}
+
+        {account && (
+          <>
+            <hr className="lol-drawer-divider" />
+            <button type="button" className="lol-drawer-link lol-drawer-link--danger" onClick={handleLogout}>
+              <LogOut size={17} />
+              Sair
+            </button>
+          </>
         )}
       </div>
-    </nav>
+
+      <header className="lol-navbar">
+        <div className="lol-navbar-inner">
+          <button type="button" className="lol-nav-icon-btn" onClick={() => setIsMenuOpen(true)} aria-label="Abrir menu">
+            <Menu size={22} />
+          </button>
+          <span className="lol-navbar-brand">Uga Rinhas</span>
+        </div>
+        {account && <span className="lol-navbar-account">{account.display_name}</span>}
+      </header>
+    </>
   );
 };

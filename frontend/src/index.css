@@ -30,9 +30,19 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 2rem;
-  background: var(--lol-surface);
+  height: 4rem;
+  padding: 0 1.25rem;
+  background: var(--lol-bg);
   border-bottom: 1px solid var(--lol-border);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.lol-navbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .lol-navbar-brand {
@@ -41,22 +51,119 @@ body {
   letter-spacing: 0.05em;
 }
 
-.lol-navbar-links {
-  display: flex;
-  gap: 1.5rem;
+.lol-navbar-account {
+  color: var(--lol-text-muted);
+  font-size: 0.85rem;
 }
 
-.lol-navbar-link {
+.lol-nav-icon-btn {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--lol-text-muted);
+}
+
+.lol-nav-icon-btn:hover {
+  background: var(--lol-surface);
+  color: var(--lol-text);
+}
+
+/* Drawer */
+
+.lol-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 45;
+}
+
+.lol-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 280px;
+  background: var(--lol-surface);
+  border-right: 1px solid var(--lol-border);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  z-index: 50;
+  transition: transform 0.25s ease-out;
+  overflow-y: auto;
+}
+
+.lol-drawer.is-closed {
+  transform: translateX(-100%);
+}
+
+.lol-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.lol-drawer-divider {
+  border: none;
+  border-top: 1px solid var(--lol-border);
+  margin: 0.75rem 0;
+}
+
+.lol-drawer-link {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  border-left: 3px solid transparent;
   color: var(--lol-text-muted);
   text-decoration: none;
   font-size: 0.9rem;
+  font-weight: 500;
+  background: transparent;
+  border-top: none;
+  border-bottom: none;
+  border-right: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
 }
 
-.lol-navbar-link.active {
+.lol-drawer-link svg {
+  flex-shrink: 0;
+  color: var(--lol-text-muted);
+}
+
+.lol-drawer-link:hover {
+  background: var(--lol-bg);
+  color: var(--lol-text);
+}
+
+.lol-drawer-link.is-active {
+  background: rgba(200, 170, 110, 0.14);
+  border-left-color: var(--lol-gold);
   color: var(--lol-gold);
+}
+
+.lol-drawer-link.is-active svg {
+  color: var(--lol-gold);
+}
+
+.lol-drawer-link--danger {
+  color: var(--lol-loss);
+}
+
+.lol-drawer-link--danger svg {
+  color: var(--lol-loss);
 }
 
 .lol-main {
@@ -670,12 +777,6 @@ body {
   color: var(--lol-gold);
 }
 
-.lol-navbar-logout {
-  background: none;
-  border: none;
-  font: inherit;
-  cursor: pointer;
-}
 
 /* Groups */
 
