@@ -25,6 +25,7 @@ from app.groups.discover_groups_usecase import (
     ListDiscoverableGroupsUseCase,
     LookupGroupByCodeUseCase,
 )
+from app.groups.get_group_leader_usecase import GetGroupLeaderUseCase, GroupLeaderResponse
 from app.groups.get_group_members_usecase import GetGroupMembersUseCase, GroupMemberResponse
 from app.groups.join_group_usecase import JoinGroupRequest, JoinGroupResponse, JoinGroupUseCase
 from app.groups.join_requests_usecase import ListJoinRequestsUseCase, RespondToJoinRequestUseCase
@@ -38,6 +39,7 @@ from app.groups.transfer_ownership_usecase import (
 from app.groups.update_group_usecase import UpdateGroupRequest, UpdateGroupUseCase
 from app.infrastructure.database import get_session
 from app.infrastructure.exceptions import ForbiddenError, ResourceNotFoundError
+from app.infrastructure.riot_client import RiotClient
 from app.players.repository import PlayerRepository
 
 router = APIRouter(prefix="/api/groups", tags=["groups"])
@@ -119,6 +121,20 @@ async def members(
     group_id: uuid.UUID, session: Session, current_player: CurrentPlayer
 ) -> list[GroupMemberResponse]:
     use_case = GetGroupMembersUseCase(GroupRepository(session), current_player)
+    return await use_case.execute(group_id)
+
+
+@router.get("/{group_id}/leader", response_model=GroupLeaderResponse)
+async def leader(
+    group_id: uuid.UUID, session: Session, current_player: CurrentPlayer
+) -> GroupLeaderResponse:
+    use_case = GetGroupLeaderUseCase(
+        GroupRepository(session),
+        GroupMatchRepository(session),
+        PlayerRepository(session),
+        RiotClient(),
+        current_player,
+    )
     return await use_case.execute(group_id)
 
 

@@ -668,6 +668,46 @@ h2 {
   border-radius: 50%;
 }
 
+.lol-rank-emblem--small {
+  width: 28px;
+  height: 28px;
+}
+
+.lol-leader-card {
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+.lol-leader-rank {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.lol-leader-wins {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+  min-width: 100px;
+  text-align: center;
+}
+
+.lol-leader-wins strong {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--lol-win);
+}
+
+.lol-leader-wins span {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--lol-text-muted);
+}
+
 .lol-rank-info {
   display: flex;
   flex-direction: column;

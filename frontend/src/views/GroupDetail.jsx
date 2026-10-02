@@ -11,6 +11,7 @@ import { LoadingScreen } from '../components/common/LoadingScreen';
 import { MemberCard } from '../components/groups/MemberCard';
 import { JoinRequestRow } from '../components/groups/JoinRequestRow';
 import { GroupPodium } from '../components/groups/GroupPodium';
+import { GroupLeaderCard } from '../components/groups/GroupLeaderCard';
 import { TeamBuilder } from '../components/groups/TeamBuilder';
 
 const MAX_PLAYERS = 10;
@@ -42,6 +43,7 @@ const GroupDetail = () => {
   const [members, setMembers] = useState([]);
   const [requests, setRequests] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
+  const [leader, setLeader] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -65,14 +67,16 @@ const GroupDetail = () => {
   const isOwner = group && account && group.owner_id === account.id;
 
   const fetchAll = async () => {
-    const [groupData, membersData, leaderboardData] = await Promise.all([
+    const [groupData, membersData, leaderboardData, leaderData] = await Promise.all([
       groupsService.getById(id),
       groupsService.members(id),
       groupsService.leaderboard(id),
+      groupsService.leader(id),
     ]);
     setGroup(groupData);
     setMembers(membersData);
     setLeaderboard(leaderboardData);
+    setLeader(leaderData);
     setSelectedIds((prev) => {
       const next = new Set(membersData.slice(0, MAX_PLAYERS).map((m) => m.id));
       return prev.size === 0 ? next : new Set([...prev].filter((pid) => next.has(pid)));
@@ -269,6 +273,13 @@ const GroupDetail = () => {
 
             <GroupPodium entries={leaderboard} />
           </div>
+
+          {leader && (
+            <section className="lol-profile-section">
+              <h2>Líder do grupo</h2>
+              <GroupLeaderCard leader={leader} />
+            </section>
+          )}
 
           {isOwner && requests.length > 0 && (
             <section className="lol-profile-section">
