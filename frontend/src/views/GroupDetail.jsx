@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Shuffle, Pencil, LogOut, Crown } from 'lucide-react';
+import { Shuffle, Pencil, LogOut, Crown, UserMinus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { groupsService } from '../services/groupsService';
 import { groupMatchesService } from '../services/groupMatchesService';
@@ -25,8 +25,7 @@ const GroupDetail = () => {
 
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
-  const [transferModalOpen, setTransferModalOpen] = useState(false);
-  const [transferTargetId, setTransferTargetId] = useState('');
+  const [managingMember, setManagingMember] = useState(null);
 
   const isOwner = group && account && group.owner_id === account.id;
 
@@ -91,17 +90,6 @@ const GroupDetail = () => {
     }
   };
 
-  const handleTransferOwnership = async (e) => {
-    e.preventDefault();
-    try {
-      setGroup(await groupsService.transferOwnership(id, transferTargetId));
-      setTransferModalOpen(false);
-      setTransferTargetId('');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Não foi possível transferir a liderança.');
-    }
-  };
-
   const handleLeave = async () => {
     try {
       await groupsService.removeMember(id, account.id);
@@ -111,12 +99,22 @@ const GroupDetail = () => {
     }
   };
 
-  const handleRemoveMember = async (memberId) => {
+  const handleRemoveMember = async () => {
     try {
-      await groupsService.removeMember(id, memberId);
-      setMembers((prev) => prev.filter((m) => m.id !== memberId));
+      await groupsService.removeMember(id, managingMember.id);
+      setMembers((prev) => prev.filter((m) => m.id !== managingMember.id));
+      setManagingMember(null);
     } catch (err) {
       setError(err.response?.data?.message || 'Não foi possível remover o jogador.');
+    }
+  };
+
+  const handlePromoteMember = async () => {
+    try {
+      setGroup(await groupsService.transferOwnership(id, managingMember.id));
+      setManagingMember(null);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Não foi possível promover o jogador.');
     }
   };
 
@@ -156,16 +154,6 @@ const GroupDetail = () => {
         Código de convite: <strong>{group.join_code}</strong>
       </p>
 
-      {isOwner && members.length > 1 && (
-        <button
-          type="button"
-          className="lol-leave-button lol-leave-button--gold"
-          onClick={() => setTransferModalOpen(true)}
-        >
-          <Crown size={14} /> Transferir liderança
-        </button>
-      )}
-
       {!isOwner && (
         <button type="button" className="lol-leave-button" onClick={handleLeave}>
           <LogOut size={14} /> Sair do grupo
@@ -199,7 +187,7 @@ const GroupDetail = () => {
             member={member}
             selected={selectedIds.has(member.id)}
             onToggle={toggleSelected}
-            onRemove={isOwner && member.id !== account.id ? handleRemoveMember : null}
+            onOpenOptions={isOwner && member.id !== account.id ? setManagingMember : null}
           />
         )}
       />
@@ -227,33 +215,22 @@ const GroupDetail = () => {
       </Modal>
 
       <Modal
-        isOpen={transferModalOpen}
-        onClose={() => setTransferModalOpen(false)}
-        title="Transferir liderança"
+        isOpen={!!managingMember}
+        onClose={() => setManagingMember(null)}
+        title={managingMember?.display_name || ''}
       >
-        <form onSubmit={handleTransferOwnership} className="lol-auth-form">
-          <p className="lol-auth-hint">
-            Escolha quem vai virar o novo dono do grupo. Você perde os poderes de dono
-            imediatamente.
-          </p>
-          <select
-            value={transferTargetId}
-            onChange={(e) => setTransferTargetId(e.target.value)}
-            required
+        <div className="lol-member-options">
+          <button type="button" className="lol-member-option" onClick={handlePromoteMember}>
+            <Crown size={16} /> Promover a líder
+          </button>
+          <button
+            type="button"
+            className="lol-member-option lol-member-option--danger"
+            onClick={handleRemoveMember}
           >
-            <option value="" disabled>
-              Selecione um membro
-            </option>
-            {members
-              .filter((m) => m.id !== account.id)
-              .map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.display_name}
-                </option>
-              ))}
-          </select>
-          <button type="submit">Confirmar transferência</button>
-        </form>
+            <UserMinus size={16} /> Remover do grupo
+          </button>
+        </div>
       </Modal>
     </div>
   );

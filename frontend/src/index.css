@@ -648,7 +648,7 @@ body {
   color: var(--lol-gold);
 }
 
-.lol-member-row-remove {
+.lol-member-row-options {
   background: none;
   border: none;
   cursor: pointer;
@@ -658,8 +658,46 @@ body {
   margin-left: 0.5rem;
 }
 
-.lol-member-row-remove:hover {
+.lol-member-row-options:hover {
+  color: var(--lol-text);
+}
+
+.lol-member-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.lol-member-option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--lol-bg);
+  border: 1px solid var(--lol-border);
+  border-radius: 6px;
+  color: var(--lol-text);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.lol-member-option:hover {
+  border-color: var(--lol-gold);
+}
+
+.lol-member-option svg {
+  color: var(--lol-gold);
+  flex-shrink: 0;
+}
+
+.lol-member-option--danger svg {
   color: var(--lol-loss);
+}
+
+.lol-member-option--danger:hover {
+  border-color: var(--lol-loss);
 }
 
 .lol-group-title-row {
@@ -684,11 +722,6 @@ body {
   cursor: pointer;
   font-size: 0.85rem;
   margin: 0.5rem 0 1.5rem;
-}
-
-.lol-leave-button--gold {
-  border-color: var(--lol-gold);
-  color: var(--lol-gold);
 }
 
 .lol-request-actions {

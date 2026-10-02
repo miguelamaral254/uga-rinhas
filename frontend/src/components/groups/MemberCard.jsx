@@ -1,7 +1,7 @@
 import React from 'react';
-import { CheckCircle2, Circle, X } from 'lucide-react';
+import { CheckCircle2, Circle, MoreVertical } from 'lucide-react';
 
-export const MemberCard = ({ member, selected, onToggle, onRemove }) => (
+export const MemberCard = ({ member, selected, onToggle, onOpenOptions }) => (
   <div className={`lol-player-card lol-member-row${selected ? ' is-selected' : ''}`}>
     <button type="button" className="lol-member-row-main" onClick={() => onToggle(member.id)}>
       <div className="lol-member-row-icon-frame">
@@ -29,14 +29,14 @@ export const MemberCard = ({ member, selected, onToggle, onRemove }) => (
     >
       {selected ? <CheckCircle2 size={20} /> : <Circle size={20} />}
     </button>
-    {onRemove && (
+    {onOpenOptions && (
       <button
         type="button"
-        className="lol-member-row-remove"
-        onClick={() => onRemove(member.id)}
-        aria-label="Remover do grupo"
+        className="lol-member-row-options"
+        onClick={() => onOpenOptions(member)}
+        aria-label="Opções do membro"
       >
-        <X size={16} />
+        <MoreVertical size={18} />
       </button>
     )}
   </div>
