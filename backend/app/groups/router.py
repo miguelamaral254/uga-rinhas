@@ -16,6 +16,11 @@ from app.groups.create_group_usecase import (
     GroupResponse,
     to_group_response,
 )
+from app.groups.discover_groups_usecase import (
+    DiscoverableGroupResponse,
+    ListDiscoverableGroupsUseCase,
+    LookupGroupByCodeUseCase,
+)
 from app.groups.get_group_members_usecase import GetGroupMembersUseCase, GroupMemberResponse
 from app.groups.join_group_usecase import JoinGroupRequest, JoinGroupResponse, JoinGroupUseCase
 from app.groups.join_requests_usecase import ListJoinRequestsUseCase, RespondToJoinRequestUseCase
@@ -55,6 +60,20 @@ async def join(
 async def mine(session: Session, current_player: CurrentPlayer) -> list[GroupResponse]:
     use_case = ListMyGroupsUseCase(GroupRepository(session), current_player)
     return await use_case.execute()
+
+
+@router.get("/discover", response_model=list[DiscoverableGroupResponse])
+async def discover(
+    session: Session, current_player: CurrentPlayer
+) -> list[DiscoverableGroupResponse]:
+    use_case = ListDiscoverableGroupsUseCase(GroupRepository(session), current_player)
+    return await use_case.execute()
+
+
+@router.get("/lookup/{join_code}", response_model=DiscoverableGroupResponse)
+async def lookup(join_code: str, session: Session) -> DiscoverableGroupResponse:
+    use_case = LookupGroupByCodeUseCase(GroupRepository(session))
+    return await use_case.execute(join_code)
 
 
 @router.get("/{group_id}", response_model=GroupResponse)

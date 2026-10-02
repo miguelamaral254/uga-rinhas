@@ -2,6 +2,8 @@ import api from './api';
 
 export const groupsService = {
   listMine: async () => (await api.get('/api/groups/mine')).data,
+  discover: async () => (await api.get('/api/groups/discover')).data,
+  lookupByCode: async (joinCode) => (await api.get(`/api/groups/lookup/${joinCode}`)).data,
   getById: async (groupId) => (await api.get(`/api/groups/${groupId}`)).data,
   create: async (name) => (await api.post('/api/groups', { name })).data,
   join: async (joinCode) => (await api.post('/api/groups/join', { join_code: joinCode })).data,

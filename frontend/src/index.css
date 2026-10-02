@@ -1450,42 +1450,72 @@ h2 {
 
 /* Groups */
 
-.lol-groups-actions {
-  display: flex;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.lol-group-form {
+.lol-tabs {
   display: flex;
   gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--lol-border);
 }
 
-.lol-group-form input {
-  padding: 0.6rem;
-  background: var(--lol-surface);
-  border: 1px solid var(--lol-border);
-  border-radius: 6px;
-  color: var(--lol-text);
-}
-
-.lol-group-form button {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.6rem 1rem;
+.lol-tab {
+  padding: 0.75rem 1.25rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--lol-text-muted);
   font-family: var(--font-display);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  background: linear-gradient(180deg, var(--lol-gold-light), var(--lol-gold) 55%, var(--lol-gold-dark));
-  border: 1px solid var(--lol-gold-dark);
-  color: #0a0e14;
-  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
-  font-weight: 700;
-  white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  margin-bottom: -1px;
+}
+
+.lol-tab:hover {
+  color: var(--lol-text);
+}
+
+.lol-tab.is-active {
+  color: var(--lol-gold);
+  border-bottom-color: var(--lol-gold);
+}
+
+.lol-discover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.lol-discover-header .lol-search-bar {
+  flex: 1;
+  min-width: 220px;
+  margin-bottom: 0;
+}
+
+.lol-discover-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.lol-group-member-count {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--lol-text-muted);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.lol-group-info-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
 }
 
 .lol-group-list {
@@ -1514,6 +1544,13 @@ h2 {
 .lol-group-card:hover {
   border-left-color: var(--lol-gold);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+button.lol-group-card {
+  width: 100%;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
 }
 
 .lol-group-name {

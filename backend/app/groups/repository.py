@@ -144,6 +144,54 @@ class GroupRepository:
         result = await self._session.execute(query, {"group_id": group_id})
         return [GroupMember(**row._mapping) for row in result]
 
+    async def list_discoverable(
+        self, excluding_player_id: uuid.UUID
+    ) -> list[tuple[Group, GroupMember, int]]:
+        query = text("""
+            SELECT g.id, g.name, g.join_code, g.created_by, g.owner_id,
+                   p.id AS owner_id_dup, p.display_name AS owner_display_name,
+                   p.riot_game_name AS owner_riot_game_name,
+                   p.riot_tag_line AS owner_riot_tag_line,
+                   p.profile_icon_id AS owner_profile_icon_id,
+                   p.summoner_level AS owner_summoner_level,
+                   COUNT(gm.player_id) FILTER (WHERE gm.status = 'APPROVED') AS member_count
+            FROM lol.groups g
+            JOIN lol.players p ON p.id = g.owner_id
+            LEFT JOIN lol.group_members gm ON gm.group_id = g.id
+            WHERE g.id NOT IN (
+                SELECT group_id FROM lol.group_members WHERE player_id = :player_id
+            )
+            GROUP BY g.id, g.name, g.join_code, g.created_by, g.owner_id,
+                     p.id, p.display_name, p.riot_game_name, p.riot_tag_line,
+                     p.profile_icon_id, p.summoner_level
+            ORDER BY member_count DESC, g.name ASC
+        """).bindparams(bindparam("player_id", type_=PG_UUID(as_uuid=True)))
+        result = await self._session.execute(query, {"player_id": excluding_player_id})
+        return [_row_to_discoverable(row) for row in result]
+
+    async def find_discoverable_by_join_code(
+        self, join_code: str
+    ) -> tuple[Group, GroupMember, int] | None:
+        query = text("""
+            SELECT g.id, g.name, g.join_code, g.created_by, g.owner_id,
+                   p.id AS owner_id_dup, p.display_name AS owner_display_name,
+                   p.riot_game_name AS owner_riot_game_name,
+                   p.riot_tag_line AS owner_riot_tag_line,
+                   p.profile_icon_id AS owner_profile_icon_id,
+                   p.summoner_level AS owner_summoner_level,
+                   COUNT(gm.player_id) FILTER (WHERE gm.status = 'APPROVED') AS member_count
+            FROM lol.groups g
+            JOIN lol.players p ON p.id = g.owner_id
+            LEFT JOIN lol.group_members gm ON gm.group_id = g.id
+            WHERE g.join_code = :code
+            GROUP BY g.id, g.name, g.join_code, g.created_by, g.owner_id,
+                     p.id, p.display_name, p.riot_game_name, p.riot_tag_line,
+                     p.profile_icon_id, p.summoner_level
+        """)
+        result = await self._session.execute(query, {"code": join_code})
+        row = result.first()
+        return _row_to_discoverable(row) if row else None
+
     async def list_for_player(self, player_id: uuid.UUID) -> list[Group]:
         query = text(f"""
             SELECT {', '.join(f'g.{f}' for f in _GROUP_FIELDS.split(', '))}
@@ -154,3 +202,23 @@ class GroupRepository:
         """).bindparams(bindparam("player_id", type_=PG_UUID(as_uuid=True)))
         result = await self._session.execute(query, {"player_id": player_id})
         return [Group(**row._mapping) for row in result]
+
+
+def _row_to_discoverable(row) -> tuple[Group, GroupMember, int]:
+    mapping = row._mapping
+    group = Group(
+        id=mapping["id"],
+        name=mapping["name"],
+        join_code=mapping["join_code"],
+        created_by=mapping["created_by"],
+        owner_id=mapping["owner_id"],
+    )
+    owner = GroupMember(
+        id=mapping["owner_id_dup"],
+        display_name=mapping["owner_display_name"],
+        riot_game_name=mapping["owner_riot_game_name"],
+        riot_tag_line=mapping["owner_riot_tag_line"],
+        profile_icon_id=mapping["owner_profile_icon_id"],
+        summoner_level=mapping["owner_summoner_level"],
+    )
+    return group, owner, mapping["member_count"]
