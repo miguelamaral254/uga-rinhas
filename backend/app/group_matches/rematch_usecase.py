@@ -5,12 +5,18 @@ from app.group_matches.get_match_usecase import GetMatchUseCase
 from app.group_matches.repository import GroupMatch, GroupMatchRepository
 from app.group_matches.start_match_usecase import GroupMatchResponse
 from app.infrastructure.exceptions import ForbiddenError, ResourceNotFoundError, ValidationError
-from app.players.repository import Player
+from app.players.repository import Player, PlayerRepository
 
 
 class RematchUseCase:
-    def __init__(self, match_repository: GroupMatchRepository, current_player: Player):
+    def __init__(
+        self,
+        match_repository: GroupMatchRepository,
+        player_repository: PlayerRepository,
+        current_player: Player,
+    ):
         self._match_repository = match_repository
+        self._player_repository = player_repository
         self._current_player = current_player
 
     async def execute(self, match_id: uuid.UUID) -> GroupMatchResponse:
@@ -38,4 +44,6 @@ class RematchUseCase:
         )
         await self._match_repository.save(new_match)
 
-        return await GetMatchUseCase(self._match_repository).execute(new_match.id)
+        return await GetMatchUseCase(self._match_repository, self._player_repository).execute(
+            new_match.id
+        )

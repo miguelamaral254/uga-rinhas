@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Shuffle, Pencil, LogOut, Crown, UserMinus } from 'lucide-react';
+import { Shuffle, ArrowRight, ArrowLeft, Play, Pencil, LogOut, Crown, UserMinus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { groupsService } from '../services/groupsService';
 import { groupMatchesService } from '../services/groupMatchesService';
@@ -11,6 +11,26 @@ import { LoadingScreen } from '../components/common/LoadingScreen';
 import { MemberCard } from '../components/groups/MemberCard';
 import { JoinRequestRow } from '../components/groups/JoinRequestRow';
 import { GroupPodium } from '../components/groups/GroupPodium';
+import { TeamBuilder } from '../components/groups/TeamBuilder';
+
+const formatDuration = (totalSeconds) => {
+  const minutes = Math.floor(totalSeconds / 60)
+    .toString()
+    .padStart(2, '0');
+  const seconds = Math.floor(totalSeconds % 60)
+    .toString()
+    .padStart(2, '0');
+  return `${minutes}:${seconds}`;
+};
+
+const shuffleArray = (items) => {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+};
 
 const GroupDetail = () => {
   const { id } = useParams();
@@ -25,6 +45,16 @@ const GroupDetail = () => {
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState(null);
+
+  const [activeTab, setActiveTab] = useState('inicio');
+
+  const [rinhaStep, setRinhaStep] = useState('select');
+  const [pool, setPool] = useState([]);
+  const [teamBlue, setTeamBlue] = useState([]);
+  const [teamRed, setTeamRed] = useState([]);
+
+  const [matchHistory, setMatchHistory] = useState([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
@@ -57,6 +87,17 @@ const GroupDetail = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  useEffect(() => {
+    if (activeTab !== 'historico' || historyLoaded) return;
+    groupsService
+      .matchHistory(id)
+      .then((data) => {
+        setMatchHistory(data);
+        setHistoryLoaded(true);
+      })
+      .catch((err) => console.error('Error loading match history:', err));
+  }, [activeTab, historyLoaded, id]);
+
   const filteredMembers = useMemo(() => {
     if (!query) return members;
     const q = query.toLowerCase();
@@ -72,11 +113,33 @@ const GroupDetail = () => {
     });
   };
 
-  const handleStart = async () => {
+  const handleShuffleAndNext = () => {
+    const selectedMembers = shuffleArray(members.filter((m) => selectedIds.has(m.id)));
+    const midpoint = Math.ceil(selectedMembers.length / 2);
+    setPool([]);
+    setTeamBlue(selectedMembers.slice(0, midpoint));
+    setTeamRed(selectedMembers.slice(midpoint));
+    setError(null);
+    setRinhaStep('arrange');
+  };
+
+  const handleNext = () => {
+    setPool(members.filter((m) => selectedIds.has(m.id)));
+    setTeamBlue([]);
+    setTeamRed([]);
+    setError(null);
+    setRinhaStep('arrange');
+  };
+
+  const handleConfirmStart = async () => {
     setStarting(true);
     setError(null);
     try {
-      const match = await groupMatchesService.start(id, Array.from(selectedIds));
+      const match = await groupMatchesService.start(
+        id,
+        teamBlue.map((p) => p.id),
+        teamRed.map((p) => p.id)
+      );
       navigate(`/matches/${match.id}`);
     } catch (err) {
       setError(err.response?.data?.message || 'Não foi possível iniciar a partida.');
@@ -139,78 +202,191 @@ const GroupDetail = () => {
 
   return (
     <div className="lol-lobby">
-      <div className="lol-group-header">
-        <div className="lol-group-header-main">
-          <div className="lol-group-title-row">
-            <h1>{group.name}</h1>
-            {isOwner && (
-              <button
-                type="button"
-                className="lol-nav-icon-btn"
-                onClick={() => {
-                  setNameDraft(group.name);
-                  setEditingName(true);
-                }}
-                aria-label="Editar nome do grupo"
-              >
-                <Pencil size={16} />
-              </button>
-            )}
-          </div>
-          <p className="lol-lobby-subtitle">
-            Código de convite: <strong>{group.join_code}</strong>
-          </p>
-
-          {!isOwner && (
-            <button type="button" className="lol-leave-button" onClick={handleLeave}>
-              <LogOut size={14} /> Sair do grupo
-            </button>
-          )}
-        </div>
-
-        <GroupPodium entries={leaderboard} />
+      <div className="lol-group-title-row">
+        <h1>{group.name}</h1>
+        {isOwner && (
+          <button
+            type="button"
+            className="lol-nav-icon-btn"
+            onClick={() => {
+              setNameDraft(group.name);
+              setEditingName(true);
+            }}
+            aria-label="Editar nome do grupo"
+          >
+            <Pencil size={16} />
+          </button>
+        )}
       </div>
 
-      {isOwner && requests.length > 0 && (
-        <section className="lol-profile-section">
-          <h2>Pedidos para entrar</h2>
-          <div className="lol-player-list">
-            {requests.map((r) => (
-              <JoinRequestRow
-                key={r.id}
-                request={r}
-                onApprove={handleApproveRequest}
-                onReject={handleRejectRequest}
-              />
-            ))}
+      <div className="lol-tabs">
+        <button
+          type="button"
+          className={`lol-tab${activeTab === 'inicio' ? ' is-active' : ''}`}
+          onClick={() => setActiveTab('inicio')}
+        >
+          Início
+        </button>
+        <button
+          type="button"
+          className={`lol-tab${activeTab === 'historico' ? ' is-active' : ''}`}
+          onClick={() => setActiveTab('historico')}
+        >
+          Histórico
+        </button>
+        <button
+          type="button"
+          className={`lol-tab${activeTab === 'rinha' ? ' is-active' : ''}`}
+          onClick={() => setActiveTab('rinha')}
+        >
+          Rinha!
+        </button>
+      </div>
+
+      {activeTab === 'inicio' && (
+        <>
+          <div className="lol-group-header">
+            <div className="lol-group-header-main">
+              <p className="lol-lobby-subtitle">
+                Código de convite: <strong>{group.join_code}</strong>
+              </p>
+              {!isOwner && (
+                <button type="button" className="lol-leave-button" onClick={handleLeave}>
+                  <LogOut size={14} /> Sair do grupo
+                </button>
+              )}
+            </div>
+
+            <GroupPodium entries={leaderboard} />
           </div>
+
+          {isOwner && requests.length > 0 && (
+            <section className="lol-profile-section">
+              <h2>Pedidos para entrar</h2>
+              <div className="lol-player-list">
+                {requests.map((r) => (
+                  <JoinRequestRow
+                    key={r.id}
+                    request={r}
+                    onApprove={handleApproveRequest}
+                    onReject={handleRejectRequest}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+        </>
+      )}
+
+      {activeTab === 'historico' && (
+        <section className="lol-profile-section">
+          {matchHistory.length === 0 ? (
+            <p className="lol-profile-section-empty">Nenhuma rinha registrada ainda.</p>
+          ) : (
+            <table className="lol-match-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Time Azul</th>
+                  <th>Time Vermelho</th>
+                  <th>Duração</th>
+                </tr>
+              </thead>
+              <tbody>
+                {matchHistory.map((match) => (
+                  <tr key={match.match_id}>
+                    <td>{new Date(match.ended_at).toLocaleString('pt-BR')}</td>
+                    <td className={match.winning_team === 'BLUE' ? 'lol-win' : undefined}>
+                      {match.team_blue.map((p) => p.display_name).join(', ')}
+                    </td>
+                    <td className={match.winning_team === 'RED' ? 'lol-win' : undefined}>
+                      {match.team_red.map((p) => p.display_name).join(', ')}
+                    </td>
+                    <td>{formatDuration(match.duration_seconds)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </section>
       )}
 
-      <SearchBar placeholder="Buscar jogador..." onSearch={setQuery} />
+      {activeTab === 'rinha' && (
+        <>
+          {rinhaStep === 'select' && (
+            <>
+              <SearchBar placeholder="Buscar jogador..." onSearch={setQuery} />
 
-      <PaginatedGrid
-        items={filteredMembers}
-        emptyMessage="Nenhum jogador encontrado."
-        renderItem={(member) => (
-          <MemberCard
-            key={member.id}
-            member={member}
-            selected={selectedIds.has(member.id)}
-            onToggle={toggleSelected}
-            onOpenOptions={isOwner && member.id !== account.id ? setManagingMember : null}
-          />
-        )}
-      />
+              <PaginatedGrid
+                items={filteredMembers}
+                emptyMessage="Nenhum jogador encontrado."
+                renderItem={(member) => (
+                  <MemberCard
+                    key={member.id}
+                    member={member}
+                    selected={selectedIds.has(member.id)}
+                    onToggle={toggleSelected}
+                    onOpenOptions={isOwner && member.id !== account.id ? setManagingMember : null}
+                  />
+                )}
+              />
 
-      <button
-        className="lol-sync-button"
-        onClick={handleStart}
-        disabled={starting || selectedIds.size < 2}
-      >
-        <Shuffle size={16} />
-        {starting ? 'Sorteando...' : 'Sortear e iniciar partida'}
-      </button>
+              <div className="lol-rematch-buttons">
+                <button
+                  type="button"
+                  className="lol-sync-button"
+                  onClick={handleShuffleAndNext}
+                  disabled={selectedIds.size < 2}
+                >
+                  <Shuffle size={16} /> Sortear e iniciar partida
+                </button>
+                <button
+                  type="button"
+                  className="lol-sync-button"
+                  onClick={handleNext}
+                  disabled={selectedIds.size < 2}
+                >
+                  Próximo <ArrowRight size={16} />
+                </button>
+              </div>
+            </>
+          )}
+
+          {rinhaStep === 'arrange' && (
+            <>
+              <TeamBuilder
+                pool={pool}
+                teamBlue={teamBlue}
+                teamRed={teamRed}
+                onChange={(nextPool, nextBlue, nextRed) => {
+                  setPool(nextPool);
+                  setTeamBlue(nextBlue);
+                  setTeamRed(nextRed);
+                }}
+              />
+
+              <div className="lol-rematch-buttons">
+                <button
+                  type="button"
+                  className="lol-sync-button"
+                  onClick={() => setRinhaStep('select')}
+                >
+                  <ArrowLeft size={16} /> Voltar
+                </button>
+                <button
+                  type="button"
+                  className="lol-sync-button"
+                  onClick={handleConfirmStart}
+                  disabled={starting || teamBlue.length === 0 || teamRed.length === 0}
+                >
+                  <Play size={16} /> {starting ? 'Iniciando...' : 'Iniciar partida'}
+                </button>
+              </div>
+            </>
+          )}
+        </>
+      )}
+
       {error && <p className="lol-form-error">{error}</p>}
 
       <Modal isOpen={editingName} onClose={() => setEditingName(false)} title="Editar nome do grupo">

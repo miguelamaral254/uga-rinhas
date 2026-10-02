@@ -1,5 +1,4 @@
 import datetime
-import random
 import uuid
 
 from pydantic import BaseModel
@@ -14,7 +13,8 @@ from app.shared.usecase import UseCase
 
 class StartMatchRequest(BaseModel):
     group_id: uuid.UUID
-    player_ids: list[uuid.UUID]
+    team_blue_ids: list[uuid.UUID]
+    team_red_ids: list[uuid.UUID]
 
 
 class MatchPlayer(BaseModel):
@@ -60,22 +60,25 @@ class StartMatchUseCase(UseCase[StartMatchRequest, GroupMatchResponse]):
         if not await self._group_repository.is_member(request.group_id, self._current_player.id):
             raise ForbiddenError("group.notAMember")
 
+        if not request.team_blue_ids or not request.team_red_ids:
+            raise ValidationError("match.emptyTeam")
+        if set(request.team_blue_ids) & set(request.team_red_ids):
+            raise ValidationError("match.playerOnBothTeams")
+
         members = await self._group_repository.list_members(request.group_id)
         member_ids = {m.id for m in members}
-        selected_ids = set(request.player_ids)
+        selected_ids = set(request.team_blue_ids) | set(request.team_red_ids)
         if not selected_ids.issubset(member_ids):
             raise ValidationError("match.playerNotInGroup")
         if len(selected_ids) < 2:
             raise ValidationError("match.notEnoughPlayers")
 
-        players = await self._player_repository.list_by_ids(list(selected_ids))
-        shuffled = players.copy()
-        random.shuffle(shuffled)
-        midpoint = len(shuffled) // 2 + len(shuffled) % 2
-
+        players_by_id = {
+            p.id: p for p in await self._player_repository.list_by_ids(list(selected_ids))
+        }
         version = await ddragon.get_latest_version()
-        team_blue = [_to_match_player(p, version) for p in shuffled[:midpoint]]
-        team_red = [_to_match_player(p, version) for p in shuffled[midpoint:]]
+        team_blue = [_to_match_player(players_by_id[pid], version) for pid in request.team_blue_ids]
+        team_red = [_to_match_player(players_by_id[pid], version) for pid in request.team_red_ids]
 
         match_id = uuid.uuid4()
         match = GroupMatch(
@@ -121,3 +124,20 @@ def _to_match_player(player: Player, version: str) -> MatchPlayer:
         ),
         summoner_level=player.summoner_level,
     )
+
+
+async def resolve_live_match_players(
+    stored_players: list[dict], player_repository: PlayerRepository, version: str
+) -> list[MatchPlayer]:
+    """Team rosters are stored as a JSONB snapshot (id + name + icon at match time),
+    but a player's display name can change afterwards - always resolve the current
+    name/icon by id instead of trusting the frozen snapshot, so renaming a player
+    doesn't leave their past matches showing a stale name forever."""
+    ids = [uuid.UUID(p["id"]) for p in stored_players]
+    live_by_id = {p.id: p for p in await player_repository.list_by_ids(ids)}
+
+    result = []
+    for stored in stored_players:
+        live = live_by_id.get(uuid.UUID(stored["id"]))
+        result.append(_to_match_player(live, version) if live else MatchPlayer(**stored))
+    return result

@@ -1,0 +1,81 @@
+import React, { useEffect, useState } from 'react';
+import { TeamMemberRow } from './TeamMemberRow';
+
+const ZONES = [
+  { key: 'pool', title: 'Não alocados', className: 'lol-team--pool' },
+  { key: 'blue', title: 'Time Azul', className: 'lol-team--blue' },
+  { key: 'red', title: 'Time Vermelho', className: 'lol-team--red' },
+];
+
+export const TeamBuilder = ({ pool, teamBlue, teamRed, onChange }) => {
+  const [dragOverZone, setDragOverZone] = useState(null);
+  const zoneItems = { pool, blue: teamBlue, red: teamRed };
+
+  // A drop that lands outside a recognized zone (e.g. the gap between columns)
+  // would otherwise fall through to the browser's default action - navigating
+  // the whole page to the dragged image's URL. Block that globally while this
+  // wizard step is mounted.
+  useEffect(() => {
+    const preventDefault = (e) => e.preventDefault();
+    window.addEventListener('dragover', preventDefault);
+    window.addEventListener('drop', preventDefault);
+    return () => {
+      window.removeEventListener('dragover', preventDefault);
+      window.removeEventListener('drop', preventDefault);
+    };
+  }, []);
+
+  const handleDrop = (targetKey) => (e) => {
+    e.preventDefault();
+    setDragOverZone(null);
+    const playerId = e.dataTransfer.getData('text/plain');
+    if (!playerId) return;
+
+    const next = { pool: [...pool], blue: [...teamBlue], red: [...teamRed] };
+    let moved = null;
+    for (const key of Object.keys(next)) {
+      const idx = next[key].findIndex((p) => p.id === playerId);
+      if (idx !== -1) {
+        [moved] = next[key].splice(idx, 1);
+        break;
+      }
+    }
+    if (!moved) return;
+    next[targetKey].push(moved);
+    onChange(next.pool, next.blue, next.red);
+  };
+
+  return (
+    <div className="lol-team-builder">
+      {ZONES.map(({ key, title, className }) => (
+        <div
+          key={key}
+          className={`lol-team lol-team-zone ${className}${dragOverZone === key ? ' is-drag-over' : ''}`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOverZone(key);
+          }}
+          onDragLeave={() => setDragOverZone((z) => (z === key ? null : z))}
+          onDrop={handleDrop(key)}
+        >
+          <h2>{title}</h2>
+          <div className="lol-player-list">
+            {zoneItems[key].length === 0 && (
+              <p className="lol-profile-section-empty">Arraste jogadores pra cá.</p>
+            )}
+            {zoneItems[key].map((player, index) => (
+              <div
+                key={player.id}
+                draggable
+                onDragStart={(e) => e.dataTransfer.setData('text/plain', player.id)}
+                className="lol-draggable-row"
+              >
+                <TeamMemberRow player={player} isCaptain={key !== 'pool' && index === 0} />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};

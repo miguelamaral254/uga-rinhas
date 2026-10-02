@@ -8,7 +8,7 @@ from app.group_matches.get_match_usecase import GetMatchUseCase
 from app.group_matches.repository import GroupMatchRepository
 from app.group_matches.start_match_usecase import GroupMatchResponse
 from app.infrastructure.exceptions import ForbiddenError, ResourceNotFoundError, ValidationError
-from app.players.repository import Player
+from app.players.repository import Player, PlayerRepository
 
 
 class FinishMatchRequest(BaseModel):
@@ -16,8 +16,14 @@ class FinishMatchRequest(BaseModel):
 
 
 class FinishMatchUseCase:
-    def __init__(self, match_repository: GroupMatchRepository, current_player: Player):
+    def __init__(
+        self,
+        match_repository: GroupMatchRepository,
+        player_repository: PlayerRepository,
+        current_player: Player,
+    ):
         self._match_repository = match_repository
+        self._player_repository = player_repository
         self._current_player = current_player
 
     async def execute(
@@ -38,4 +44,4 @@ class FinishMatchUseCase:
             match_id, finish_request.winning_team, ended_at, duration_seconds
         )
 
-        return await GetMatchUseCase(self._match_repository).execute(match_id)
+        return await GetMatchUseCase(self._match_repository, self._player_repository).execute(match_id)

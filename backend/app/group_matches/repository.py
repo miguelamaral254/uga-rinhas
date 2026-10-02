@@ -115,6 +115,20 @@ class GroupMatchRepository:
         result = await self._session.execute(query, {"group_id": group_id})
         return [GroupMatch(**row._mapping) for row in result]
 
+    async def list_recent_finished_by_group(
+        self, group_id: uuid.UUID, limit: int = 10
+    ) -> list[GroupMatch]:
+        query = text("""
+            SELECT id, group_id, team_blue, team_red, captain_blue_id, captain_red_id,
+                   status, winning_team, started_at, ended_at, duration_seconds
+            FROM lol.group_matches
+            WHERE group_id = :group_id AND status = 'FINISHED'
+            ORDER BY ended_at DESC
+            LIMIT :limit
+        """).bindparams(bindparam("group_id", type_=PG_UUID(as_uuid=True)))
+        result = await self._session.execute(query, {"group_id": group_id, "limit": limit})
+        return [GroupMatch(**row._mapping) for row in result]
+
     async def finish(
         self, match_id: uuid.UUID, winning_team: str, ended_at: datetime.datetime, duration_seconds: int
     ) -> None:

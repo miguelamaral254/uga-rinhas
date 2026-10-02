@@ -43,13 +43,13 @@ async def start(
 
 @router.get("/player/{player_id}/history", response_model=PlayerMatchHistoryResponse)
 async def player_history(player_id: uuid.UUID, session: Session) -> PlayerMatchHistoryResponse:
-    use_case = GetPlayerMatchHistoryUseCase(GroupMatchRepository(session))
+    use_case = GetPlayerMatchHistoryUseCase(GroupMatchRepository(session), PlayerRepository(session))
     return await use_case.execute(player_id)
 
 
 @router.get("/{match_id}", response_model=GroupMatchResponse)
 async def get_match(match_id: uuid.UUID, session: Session) -> GroupMatchResponse:
-    use_case = GetMatchUseCase(GroupMatchRepository(session))
+    use_case = GetMatchUseCase(GroupMatchRepository(session), PlayerRepository(session))
     return await use_case.execute(match_id)
 
 
@@ -57,7 +57,9 @@ async def get_match(match_id: uuid.UUID, session: Session) -> GroupMatchResponse
 async def begin(
     match_id: uuid.UUID, session: Session, current_player: CurrentPlayer
 ) -> GroupMatchResponse:
-    use_case = BeginMatchUseCase(GroupMatchRepository(session), current_player)
+    use_case = BeginMatchUseCase(
+        GroupMatchRepository(session), PlayerRepository(session), current_player
+    )
     return await use_case.execute(match_id)
 
 
@@ -65,7 +67,9 @@ async def begin(
 async def rematch(
     match_id: uuid.UUID, session: Session, current_player: CurrentPlayer
 ) -> GroupMatchResponse:
-    use_case = RematchUseCase(GroupMatchRepository(session), current_player)
+    use_case = RematchUseCase(
+        GroupMatchRepository(session), PlayerRepository(session), current_player
+    )
     return await use_case.execute(match_id)
 
 
@@ -76,5 +80,7 @@ async def finish(
     session: Session,
     current_player: CurrentPlayer,
 ) -> GroupMatchResponse:
-    use_case = FinishMatchUseCase(GroupMatchRepository(session), current_player)
+    use_case = FinishMatchUseCase(
+        GroupMatchRepository(session), PlayerRepository(session), current_player
+    )
     return await use_case.execute(match_id, request)

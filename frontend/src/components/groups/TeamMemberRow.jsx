@@ -6,7 +6,12 @@ export const TeamMemberRow = ({ player, isCaptain }) => (
     <div className="lol-member-row-main">
       <div className="lol-member-row-icon-frame">
         {player.profile_icon_url ? (
-          <img src={player.profile_icon_url} alt="" className="lol-member-row-icon" />
+          <img
+            src={player.profile_icon_url}
+            alt=""
+            draggable={false}
+            className="lol-member-row-icon"
+          />
         ) : (
           <div className="lol-member-row-icon lol-member-row-icon--placeholder" />
         )}

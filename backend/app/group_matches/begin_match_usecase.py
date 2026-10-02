@@ -5,7 +5,7 @@ from app.group_matches.get_match_usecase import GetMatchUseCase
 from app.group_matches.repository import GroupMatchRepository
 from app.group_matches.start_match_usecase import GroupMatchResponse
 from app.infrastructure.exceptions import ForbiddenError, ResourceNotFoundError, ValidationError
-from app.players.repository import Player
+from app.players.repository import Player, PlayerRepository
 
 
 class BeginMatchUseCase:
@@ -13,8 +13,14 @@ class BeginMatchUseCase:
     creates the DRAFT - the timer and IN_PROGRESS status begin here instead, once
     either captain confirms both sides are actually ready to play."""
 
-    def __init__(self, match_repository: GroupMatchRepository, current_player: Player):
+    def __init__(
+        self,
+        match_repository: GroupMatchRepository,
+        player_repository: PlayerRepository,
+        current_player: Player,
+    ):
         self._match_repository = match_repository
+        self._player_repository = player_repository
         self._current_player = current_player
 
     async def execute(self, match_id: uuid.UUID) -> GroupMatchResponse:
@@ -27,4 +33,4 @@ class BeginMatchUseCase:
             raise ValidationError("match.alreadyStarted")
 
         await self._match_repository.begin(match_id, datetime.datetime.now(datetime.UTC))
-        return await GetMatchUseCase(self._match_repository).execute(match_id)
+        return await GetMatchUseCase(self._match_repository, self._player_repository).execute(match_id)

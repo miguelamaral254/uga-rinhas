@@ -5,7 +5,9 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from app.group_matches.repository import GroupMatchRepository
-from app.group_matches.start_match_usecase import MatchPlayer
+from app.group_matches.start_match_usecase import MatchPlayer, resolve_live_match_players
+from app.infrastructure import ddragon
+from app.players.repository import PlayerRepository
 
 
 class PlayerMatchSummary(BaseModel):
@@ -28,11 +30,13 @@ class PlayerMatchHistoryResponse(BaseModel):
 
 
 class GetPlayerMatchHistoryUseCase:
-    def __init__(self, match_repository: GroupMatchRepository):
+    def __init__(self, match_repository: GroupMatchRepository, player_repository: PlayerRepository):
         self._match_repository = match_repository
+        self._player_repository = player_repository
 
     async def execute(self, player_id: uuid.UUID, limit: int = 10) -> PlayerMatchHistoryResponse:
         rows = await self._match_repository.list_finished_for_player(player_id)
+        version = await ddragon.get_latest_version()
 
         wins = 0
         losses = 0
@@ -51,6 +55,12 @@ class GetPlayerMatchHistoryUseCase:
                 losses += 1
 
             if len(recent_matches) < limit:
+                own_team_live = await resolve_live_match_players(
+                    own_team, self._player_repository, version
+                )
+                other_team_live = await resolve_live_match_players(
+                    other_team, self._player_repository, version
+                )
                 recent_matches.append(
                     PlayerMatchSummary(
                         match_id=match.id,
@@ -59,10 +69,8 @@ class GetPlayerMatchHistoryUseCase:
                         result="WIN" if won else "LOSS",
                         duration_seconds=match.duration_seconds or 0,
                         ended_at=match.ended_at,
-                        teammates=[
-                            MatchPlayer(**p) for p in own_team if p["id"] != player_id_str
-                        ],
-                        opponents=[MatchPlayer(**p) for p in other_team],
+                        teammates=[p for p in own_team_live if str(p.id) != player_id_str],
+                        opponents=other_team_live,
                     )
                 )
 

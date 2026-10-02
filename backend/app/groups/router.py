@@ -9,6 +9,10 @@ from app.group_matches.get_group_leaderboard_usecase import (
     GetGroupLeaderboardUseCase,
     GroupLeaderboardEntry,
 )
+from app.group_matches.get_group_match_history_usecase import (
+    GetGroupMatchHistoryUseCase,
+    GroupMatchSummaryResponse,
+)
 from app.group_matches.repository import GroupMatchRepository
 from app.groups.create_group_usecase import (
     CreateGroupRequest,
@@ -34,6 +38,7 @@ from app.groups.transfer_ownership_usecase import (
 from app.groups.update_group_usecase import UpdateGroupRequest, UpdateGroupUseCase
 from app.infrastructure.database import get_session
 from app.infrastructure.exceptions import ForbiddenError, ResourceNotFoundError
+from app.players.repository import PlayerRepository
 
 router = APIRouter(prefix="/api/groups", tags=["groups"])
 
@@ -155,5 +160,15 @@ async def leaderboard(
 ) -> list[GroupLeaderboardEntry]:
     use_case = GetGroupLeaderboardUseCase(
         GroupRepository(session), GroupMatchRepository(session), current_player
+    )
+    return await use_case.execute(group_id)
+
+
+@router.get("/{group_id}/matches", response_model=list[GroupMatchSummaryResponse])
+async def match_history(
+    group_id: uuid.UUID, session: Session, current_player: CurrentPlayer
+) -> list[GroupMatchSummaryResponse]:
+    use_case = GetGroupMatchHistoryUseCase(
+        GroupRepository(session), GroupMatchRepository(session), PlayerRepository(session), current_player
     )
     return await use_case.execute(group_id)

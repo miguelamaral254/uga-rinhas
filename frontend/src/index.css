@@ -1064,15 +1064,6 @@ h2 {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
 }
 
-.lol-group-header-main h1 {
-  margin-bottom: 0.5rem;
-  padding-bottom: 0;
-}
-
-.lol-group-header-main h1::after {
-  display: none;
-}
-
 .lol-group-header-main .lol-lobby-subtitle {
   margin: 0;
 }
@@ -1310,6 +1301,41 @@ h2 {
 
 .lol-team--red h2 {
   color: var(--lol-loss);
+}
+
+.lol-team-builder {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 860px) {
+  .lol-team-builder {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lol-team--pool {
+  border-color: var(--lol-border);
+}
+
+.lol-team-zone {
+  min-height: 160px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.lol-team-zone.is-drag-over {
+  border-color: var(--lol-gold);
+  background: rgba(200, 170, 110, 0.08);
+}
+
+.lol-draggable-row {
+  cursor: grab;
+}
+
+.lol-draggable-row:active {
+  cursor: grabbing;
 }
 
 .lol-mastery-section {
