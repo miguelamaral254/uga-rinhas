@@ -834,3 +834,43 @@ body {
   font-size: 1rem;
   margin-bottom: 0.75rem;
 }
+
+.lol-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.lol-modal {
+  background: var(--lol-surface);
+  border: 1px solid var(--lol-border);
+  border-radius: 10px;
+  width: 100%;
+  max-width: 380px;
+  padding: 1.5rem;
+}
+
+.lol-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.lol-modal-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.lol-modal-close {
+  background: none;
+  border: none;
+  color: var(--lol-text-muted);
+  cursor: pointer;
+  display: flex;
+}

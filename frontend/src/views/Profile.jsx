@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { KeyRound } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { Modal } from '../components/common/Modal';
 
 const Profile = () => {
   const { account, updateProfile, changePassword } = useAuth();
@@ -9,13 +11,13 @@ const Profile = () => {
   const [profileMessage, setProfileMessage] = useState(null);
   const [profileError, setProfileError] = useState(null);
 
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
     newPasswordConfirmation: '',
   });
   const [passwordSaving, setPasswordSaving] = useState(false);
-  const [passwordMessage, setPasswordMessage] = useState(null);
   const [passwordError, setPasswordError] = useState(null);
 
   const handleProfileSubmit = async (e) => {
@@ -33,6 +35,16 @@ const Profile = () => {
     }
   };
 
+  const resetPasswordForm = () => {
+    setPasswordForm({ currentPassword: '', newPassword: '', newPasswordConfirmation: '' });
+    setPasswordError(null);
+  };
+
+  const closePasswordModal = () => {
+    setPasswordModalOpen(false);
+    resetPasswordForm();
+  };
+
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     if (passwordForm.newPassword !== passwordForm.newPasswordConfirmation) {
@@ -41,11 +53,9 @@ const Profile = () => {
     }
     setPasswordSaving(true);
     setPasswordError(null);
-    setPasswordMessage(null);
     try {
       await changePassword(passwordForm);
-      setPasswordMessage('Senha alterada.');
-      setPasswordForm({ currentPassword: '', newPassword: '', newPasswordConfirmation: '' });
+      closePasswordModal();
     } catch (err) {
       setPasswordError(err.response?.data?.message || 'Não foi possível trocar a senha.');
     } finally {
@@ -84,7 +94,17 @@ const Profile = () => {
       </section>
 
       <section className="lol-profile-section">
-        <h2>Trocar senha</h2>
+        <h2>Senha</h2>
+        <button
+          type="button"
+          className="lol-sync-button"
+          onClick={() => setPasswordModalOpen(true)}
+        >
+          <KeyRound size={16} /> Trocar senha
+        </button>
+      </section>
+
+      <Modal isOpen={passwordModalOpen} onClose={closePasswordModal} title="Trocar senha">
         <form onSubmit={handlePasswordSubmit} className="lol-auth-form">
           <input
             type="password"
@@ -116,13 +136,12 @@ const Profile = () => {
           <p className="lol-auth-hint">
             A senha precisa ter 8+ caracteres, com maiúscula, minúscula, número e símbolo.
           </p>
+          {passwordError && <p className="lol-form-error">{passwordError}</p>}
           <button type="submit" disabled={passwordSaving}>
             {passwordSaving ? 'Salvando...' : 'Trocar senha'}
           </button>
         </form>
-        {passwordMessage && <p className="lol-auth-success">{passwordMessage}</p>}
-        {passwordError && <p className="lol-form-error">{passwordError}</p>}
-      </section>
+      </Modal>
     </div>
   );
 };
