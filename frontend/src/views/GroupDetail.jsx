@@ -4,6 +4,7 @@ import { Shuffle } from 'lucide-react';
 import { groupsService } from '../services/groupsService';
 import { groupMatchesService } from '../services/groupMatchesService';
 import { SearchBar } from '../components/common/SearchBar';
+import { PaginatedGrid } from '../components/common/PaginatedGrid';
 import { MemberCard } from '../components/groups/MemberCard';
 
 const GroupDetail = () => {
@@ -68,20 +69,19 @@ const GroupDetail = () => {
 
       <SearchBar placeholder="Buscar jogador..." onSearch={setQuery} />
 
-      {filteredMembers.length === 0 ? (
-        <div className="lol-lobby-no-results">Nenhum jogador encontrado.</div>
-      ) : (
-        <div className="lol-member-grid">
-          {filteredMembers.map((member) => (
-            <MemberCard
-              key={member.id}
-              member={member}
-              selected={selectedIds.has(member.id)}
-              onToggle={toggleSelected}
-            />
-          ))}
-        </div>
-      )}
+      <PaginatedGrid
+        items={filteredMembers}
+        listClassName="lol-member-grid"
+        emptyMessage="Nenhum jogador encontrado."
+        renderItem={(member) => (
+          <MemberCard
+            key={member.id}
+            member={member}
+            selected={selectedIds.has(member.id)}
+            onToggle={toggleSelected}
+          />
+        )}
+      />
 
       <button
         className="lol-sync-button"

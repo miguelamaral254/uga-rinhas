@@ -609,11 +609,6 @@ body {
   cursor: default;
 }
 
-.lol-lobby-no-results {
-  color: var(--lol-text-muted);
-  padding: 0.5rem 0;
-}
-
 .lol-member-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));

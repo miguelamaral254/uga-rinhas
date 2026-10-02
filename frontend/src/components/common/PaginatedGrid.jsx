@@ -3,7 +3,12 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const PAGE_SIZE = 10;
 
-export const PaginatedGrid = ({ items, renderItem, emptyMessage = 'Nenhum registro encontrado.' }) => {
+export const PaginatedGrid = ({
+  items,
+  renderItem,
+  emptyMessage = 'Nenhum registro encontrado.',
+  listClassName = 'lol-player-list',
+}) => {
   const [page, setPage] = useState(0);
 
   const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
@@ -17,7 +22,7 @@ export const PaginatedGrid = ({ items, renderItem, emptyMessage = 'Nenhum regist
 
   return (
     <div className="lol-paginated-grid">
-      <div className="lol-player-list">
+      <div className={listClassName}>
         {pageItems.map((item, i) => renderItem(item, start + i))}
       </div>
       {totalPages > 1 && (
