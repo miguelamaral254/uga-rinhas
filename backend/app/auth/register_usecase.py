@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from app.auth.repository import SessionRepository
 from app.auth.security import generate_session_token, hash_password, validate_password_strength
+from app.infrastructure import ddragon
 from app.infrastructure.config import get_settings
 from app.infrastructure.exceptions import ConflictError, ValidationError
 from app.infrastructure.riot_client import RiotClient
@@ -26,6 +27,8 @@ class AccountResponse(BaseModel):
     display_name: str
     riot_game_name: str
     riot_tag_line: str
+    profile_icon_url: str | None = None
+    summoner_level: int | None = None
 
 
 class AuthResponse(BaseModel):
@@ -87,14 +90,21 @@ class RegisterAccountUseCase(UseCase[RegisterAccountRequest, AuthResponse]):
         token = generate_session_token()
         await self._session_repository.save(token, player.id)
 
-        return AuthResponse(token=token, account=to_account_response(player))
+        return AuthResponse(token=token, account=await to_account_response(player))
 
 
-def to_account_response(player: Player) -> AccountResponse:
+async def to_account_response(player: Player) -> AccountResponse:
+    version = await ddragon.get_latest_version()
     return AccountResponse(
         id=player.id,
         username=player.username,
         display_name=player.display_name,
         riot_game_name=player.riot_game_name,
         riot_tag_line=player.riot_tag_line,
+        profile_icon_url=(
+            ddragon.profile_icon_url(version, player.profile_icon_id)
+            if player.profile_icon_id
+            else None
+        ),
+        summoner_level=player.summoner_level,
     )

@@ -40,7 +40,7 @@ async def login(request: LoginRequest, session: Session) -> AuthResponse:
 
 @router.get("/me", response_model=AccountResponse)
 async def me(current_player: CurrentPlayer) -> AccountResponse:
-    return to_account_response(current_player)
+    return await to_account_response(current_player)
 
 
 @router.patch("/me", response_model=AccountResponse)

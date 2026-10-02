@@ -28,4 +28,4 @@ class LoginUseCase(UseCase[LoginRequest, AuthResponse]):
         token = generate_session_token()
         await self._session_repository.save(token, player.id)
 
-        return AuthResponse(token=token, account=to_account_response(player))
+        return AuthResponse(token=token, account=await to_account_response(player))

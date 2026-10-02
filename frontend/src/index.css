@@ -126,9 +126,115 @@ h2 {
   }
 }
 
-.lol-navbar-account {
+.lol-account-menu {
+  position: relative;
+}
+
+.lol-account-trigger {
+  display: flex;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.lol-account-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  border: 2px solid var(--lol-gold-dark);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lol-account-trigger:hover .lol-account-avatar {
+  border-color: var(--lol-gold);
+  box-shadow: 0 0 10px rgba(200, 170, 110, 0.35);
+}
+
+.lol-account-avatar--placeholder {
+  background: var(--lol-surface-2);
+}
+
+.lol-account-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+}
+
+.lol-account-dropdown {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  right: 0;
+  min-width: 200px;
+  background: linear-gradient(160deg, var(--lol-surface-2), var(--lol-surface));
+  border: 1px solid var(--lol-border);
+  border-top: 2px solid var(--lol-gold);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  padding: 0.5rem;
+  z-index: 60;
+}
+
+.lol-account-dropdown-header {
+  padding: 0.5rem 0.65rem 0.75rem;
+  margin-bottom: 0.4rem;
+  border-bottom: 1px solid var(--lol-border);
+}
+
+.lol-account-dropdown-name {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--lol-text);
+}
+
+.lol-account-dropdown-riot {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
   color: var(--lol-text-muted);
-  font-size: 0.85rem;
+}
+
+.lol-account-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.6rem 0.65rem;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  color: var(--lol-text);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.lol-account-dropdown-item:hover {
+  background: rgba(200, 170, 110, 0.1);
+  color: var(--lol-gold-light);
+  text-decoration: none;
+}
+
+.lol-account-dropdown-item svg {
+  color: var(--lol-gold);
+  flex-shrink: 0;
+}
+
+.lol-account-dropdown-item--danger {
+  color: var(--lol-loss);
+}
+
+.lol-account-dropdown-item--danger svg {
+  color: var(--lol-loss);
+}
+
+.lol-account-dropdown-item--danger:hover {
+  background: rgba(248, 81, 73, 0.1);
+  color: var(--lol-loss);
 }
 
 .lol-nav-icon-btn {

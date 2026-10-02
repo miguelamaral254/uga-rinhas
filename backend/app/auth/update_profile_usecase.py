@@ -21,4 +21,4 @@ class UpdateProfileUseCase(UseCase[UpdateProfileRequest, AccountResponse]):
         updated = Player(
             **{**vars(self._current_player), "display_name": request.display_name}
         )
-        return to_account_response(updated)
+        return await to_account_response(updated)

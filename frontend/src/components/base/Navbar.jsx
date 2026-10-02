@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Home, Users, UsersRound, UserCog, LogIn, LogOut } from 'lucide-react';
+import { Menu, X, Home, Users, UsersRound, UserCog, LogIn, LogOut, Settings } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 export const Navbar = () => {
@@ -8,12 +8,14 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 
   const closeMenu = () => setIsMenuOpen(false);
 
   const handleLogout = () => {
     logout();
     closeMenu();
+    setIsAccountMenuOpen(false);
     navigate('/login');
   };
 
@@ -38,6 +40,12 @@ export const Navbar = () => {
   return (
     <>
       {isMenuOpen && <div className="lol-drawer-backdrop" onClick={closeMenu} />}
+      {isAccountMenuOpen && (
+        <div
+          className="lol-account-menu-backdrop"
+          onClick={() => setIsAccountMenuOpen(false)}
+        />
+      )}
 
       <div className={`lol-drawer${isMenuOpen ? '' : ' is-closed'}`}>
         <div className="lol-drawer-header">
@@ -69,7 +77,47 @@ export const Navbar = () => {
           </button>
           <span className="lol-navbar-brand">Uga Rinhas</span>
         </div>
-        {account && <span className="lol-navbar-account">{account.display_name}</span>}
+        {account && (
+          <div className="lol-account-menu">
+            <button
+              type="button"
+              className="lol-account-trigger"
+              onClick={() => setIsAccountMenuOpen((v) => !v)}
+              aria-label="Abrir menu da conta"
+            >
+              {account.profile_icon_url ? (
+                <img src={account.profile_icon_url} alt="" className="lol-account-avatar" />
+              ) : (
+                <div className="lol-account-avatar lol-account-avatar--placeholder" />
+              )}
+            </button>
+
+            {isAccountMenuOpen && (
+              <div className="lol-account-dropdown">
+                <div className="lol-account-dropdown-header">
+                  <p className="lol-account-dropdown-name">{account.display_name}</p>
+                  <p className="lol-account-dropdown-riot">
+                    {account.riot_game_name}#{account.riot_tag_line}
+                  </p>
+                </div>
+                <Link
+                  to="/profile"
+                  className="lol-account-dropdown-item"
+                  onClick={() => setIsAccountMenuOpen(false)}
+                >
+                  <Settings size={16} /> Configurações
+                </Link>
+                <button
+                  type="button"
+                  className="lol-account-dropdown-item lol-account-dropdown-item--danger"
+                  onClick={handleLogout}
+                >
+                  <LogOut size={16} /> Sair
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </header>
     </>
   );
