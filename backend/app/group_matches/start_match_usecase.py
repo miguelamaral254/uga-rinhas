@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from app.group_matches.repository import GroupMatch, GroupMatchRepository
 from app.groups.repository import GroupRepository
+from app.infrastructure import ddragon
 from app.infrastructure.exceptions import ForbiddenError, ResourceNotFoundError, ValidationError
 from app.players.repository import Player, PlayerRepository
 from app.shared.usecase import UseCase
@@ -21,6 +22,8 @@ class MatchPlayer(BaseModel):
     display_name: str
     riot_game_name: str
     riot_tag_line: str
+    profile_icon_url: str | None = None
+    summoner_level: int | None = None
 
 
 class GroupMatchResponse(BaseModel):
@@ -32,7 +35,7 @@ class GroupMatchResponse(BaseModel):
     captain_red_id: uuid.UUID
     status: str
     winning_team: str | None
-    started_at: datetime.datetime
+    started_at: datetime.datetime | None
     ended_at: datetime.datetime | None
     duration_seconds: int | None
 
@@ -70,8 +73,9 @@ class StartMatchUseCase(UseCase[StartMatchRequest, GroupMatchResponse]):
         random.shuffle(shuffled)
         midpoint = len(shuffled) // 2 + len(shuffled) % 2
 
-        team_blue = [_to_match_player(p) for p in shuffled[:midpoint]]
-        team_red = [_to_match_player(p) for p in shuffled[midpoint:]]
+        version = await ddragon.get_latest_version()
+        team_blue = [_to_match_player(p, version) for p in shuffled[:midpoint]]
+        team_red = [_to_match_player(p, version) for p in shuffled[midpoint:]]
 
         match_id = uuid.uuid4()
         match = GroupMatch(
@@ -81,9 +85,9 @@ class StartMatchUseCase(UseCase[StartMatchRequest, GroupMatchResponse]):
             team_red=[p.model_dump(mode="json") for p in team_red],
             captain_blue_id=team_blue[0].id,
             captain_red_id=team_red[0].id,
-            status="IN_PROGRESS",
+            status="DRAFT",
             winning_team=None,
-            started_at=datetime.datetime.now(datetime.UTC),
+            started_at=None,
             ended_at=None,
             duration_seconds=None,
         )
@@ -98,16 +102,22 @@ class StartMatchUseCase(UseCase[StartMatchRequest, GroupMatchResponse]):
             captain_red_id=match.captain_red_id,
             status=match.status,
             winning_team=None,
-            started_at=match.started_at,
+            started_at=None,
             ended_at=None,
             duration_seconds=None,
         )
 
 
-def _to_match_player(player: Player) -> MatchPlayer:
+def _to_match_player(player: Player, version: str) -> MatchPlayer:
     return MatchPlayer(
         id=player.id,
         display_name=player.display_name,
         riot_game_name=player.riot_game_name,
         riot_tag_line=player.riot_tag_line,
+        profile_icon_url=(
+            ddragon.profile_icon_url(version, player.profile_icon_id)
+            if player.profile_icon_id
+            else None
+        ),
+        summoner_level=player.summoner_level,
     )

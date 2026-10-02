@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Crown } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Play, Shuffle } from 'lucide-react';
 import { groupMatchesService } from '../services/groupMatchesService';
 import { useAuth } from '../contexts/AuthContext';
+import { TeamMemberRow } from '../components/groups/TeamMemberRow';
 
 const formatDuration = (totalSeconds) => {
   const minutes = Math.floor(totalSeconds / 60)
@@ -17,24 +18,22 @@ const formatDuration = (totalSeconds) => {
 const TeamColumn = ({ title, className, players, captainId }) => (
   <div className={`lol-team ${className}`}>
     <h2>{title}</h2>
-    <ul>
+    <div className="lol-player-list">
       {players.map((p) => (
-        <li key={p.id}>
-          {p.display_name}
-          {p.id === captainId && <Crown size={14} className="lol-captain-icon" />}
-        </li>
+        <TeamMemberRow key={p.id} player={p} isCaptain={p.id === captainId} />
       ))}
-    </ul>
+    </div>
   </div>
 );
 
 const GroupMatch = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { account } = useAuth();
   const [match, setMatch] = useState(null);
   const [loading, setLoading] = useState(true);
   const [elapsed, setElapsed] = useState(0);
-  const [finishing, setFinishing] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -53,32 +52,49 @@ const GroupMatch = () => {
     return () => clearInterval(interval);
   }, [match]);
 
+  const isCaptain =
+    match && account && (account.id === match.captain_blue_id || account.id === match.captain_red_id);
+
+  const handleBegin = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      setMatch(await groupMatchesService.begin(id));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Não foi possível iniciar a partida.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleFinish = async (winningTeam) => {
-    setFinishing(true);
+    setBusy(true);
     setError(null);
     try {
       setMatch(await groupMatchesService.finish(id, winningTeam));
     } catch (err) {
       setError(err.response?.data?.message || 'Não foi possível finalizar a partida.');
     } finally {
-      setFinishing(false);
+      setBusy(false);
     }
   };
 
   if (loading) return <div className="loading-screen">Carregando partida...</div>;
   if (!match) return <div className="lol-empty">Partida não encontrada.</div>;
 
-  const isCaptain =
-    account && (account.id === match.captain_blue_id || account.id === match.captain_red_id);
-
   return (
     <div className="lol-lobby">
-      <h1>Partida em andamento</h1>
+      <h1>
+        {match.status === 'DRAFT' && 'Times sorteados'}
+        {match.status === 'IN_PROGRESS' && 'Partida em andamento'}
+        {match.status === 'FINISHED' && 'Partida finalizada'}
+      </h1>
 
       <div className="lol-match-status">
-        {match.status === 'IN_PROGRESS' ? (
+        {match.status === 'IN_PROGRESS' && (
           <span className="lol-match-timer">{formatDuration(elapsed)}</span>
-        ) : (
+        )}
+        {match.status === 'FINISHED' && (
           <span className="lol-match-timer lol-match-timer--finished">
             {formatDuration(match.duration_seconds)} · Vitória do Time{' '}
             {match.winning_team === 'BLUE' ? 'Azul' : 'Vermelho'}
@@ -101,6 +117,15 @@ const GroupMatch = () => {
         />
       </div>
 
+      {match.status === 'DRAFT' && isCaptain && (
+        <div className="lol-finish-actions">
+          <p>Confira os times. Quando todos estiverem prontos, inicie a partida.</p>
+          <button className="lol-sync-button" onClick={handleBegin} disabled={busy}>
+            <Play size={16} /> {busy ? 'Iniciando...' : 'Iniciar partida'}
+          </button>
+        </div>
+      )}
+
       {match.status === 'IN_PROGRESS' && isCaptain && (
         <div className="lol-finish-actions">
           <p>Você é capitão — só você e o outro capitão podem finalizar a partida.</p>
@@ -108,20 +133,32 @@ const GroupMatch = () => {
             <button
               className="lol-finish-button lol-finish-button--blue"
               onClick={() => handleFinish('BLUE')}
-              disabled={finishing}
+              disabled={busy}
             >
               Vitória Time Azul
             </button>
             <button
               className="lol-finish-button lol-finish-button--red"
               onClick={() => handleFinish('RED')}
-              disabled={finishing}
+              disabled={busy}
             >
               Vitória Time Vermelho
             </button>
           </div>
         </div>
       )}
+
+      {match.status === 'FINISHED' && (
+        <div className="lol-finish-actions">
+          <button
+            className="lol-sync-button"
+            onClick={() => navigate(`/groups/${match.group_id}`)}
+          >
+            <Shuffle size={16} /> Sortear outra partida
+          </button>
+        </div>
+      )}
+
       {error && <p className="lol-form-error">{error}</p>}
     </div>
   );

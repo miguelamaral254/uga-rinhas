@@ -18,7 +18,7 @@ class GroupMatch:
     captain_red_id: uuid.UUID
     status: str
     winning_team: str | None
-    started_at: datetime.datetime
+    started_at: datetime.datetime | None
     ended_at: datetime.datetime | None
     duration_seconds: int | None
 
@@ -56,6 +56,14 @@ class GroupMatchRepository:
                 "started_at": match.started_at,
             },
         )
+        await self._session.commit()
+
+    async def begin(self, match_id: uuid.UUID, started_at: datetime.datetime) -> None:
+        query = text("""
+            UPDATE lol.group_matches SET status = 'IN_PROGRESS', started_at = :started_at
+            WHERE id = :id
+        """).bindparams(bindparam("id", type_=PG_UUID(as_uuid=True)))
+        await self._session.execute(query, {"id": match_id, "started_at": started_at})
         await self._session.commit()
 
     async def find_by_id(self, match_id: uuid.UUID) -> GroupMatch | None:
