@@ -20,6 +20,8 @@ class GroupMember:
     display_name: str
     riot_game_name: str
     riot_tag_line: str
+    profile_icon_id: int | None
+    summoner_level: int | None
 
 
 class GroupRepository:
@@ -77,7 +79,8 @@ class GroupRepository:
 
     async def list_members(self, group_id: uuid.UUID) -> list[GroupMember]:
         query = text("""
-            SELECT p.id, p.display_name, p.riot_game_name, p.riot_tag_line
+            SELECT p.id, p.display_name, p.riot_game_name, p.riot_tag_line,
+                   p.profile_icon_id, p.summoner_level
             FROM lol.group_members gm
             JOIN lol.players p ON p.id = gm.player_id
             WHERE gm.group_id = :group_id

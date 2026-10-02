@@ -3,6 +3,7 @@ import uuid
 from pydantic import BaseModel
 
 from app.groups.repository import GroupRepository
+from app.infrastructure import ddragon
 from app.infrastructure.exceptions import ForbiddenError, ResourceNotFoundError
 from app.players.repository import Player
 from app.shared.usecase import UseCase
@@ -13,6 +14,8 @@ class GroupMemberResponse(BaseModel):
     display_name: str
     riot_game_name: str
     riot_tag_line: str
+    summoner_level: int | None
+    profile_icon_url: str | None
 
 
 class GetGroupMembersUseCase(UseCase[uuid.UUID, list[GroupMemberResponse]]):
@@ -28,12 +31,20 @@ class GetGroupMembersUseCase(UseCase[uuid.UUID, list[GroupMemberResponse]]):
             raise ForbiddenError("group.notAMember")
 
         members = await self._group_repository.list_members(group_id)
+        version = await ddragon.get_latest_version()
+
         return [
             GroupMemberResponse(
                 id=m.id,
                 display_name=m.display_name,
                 riot_game_name=m.riot_game_name,
                 riot_tag_line=m.riot_tag_line,
+                summoner_level=m.summoner_level,
+                profile_icon_url=(
+                    ddragon.profile_icon_url(version, m.profile_icon_id)
+                    if m.profile_icon_id
+                    else None
+                ),
             )
             for m in members
         ]

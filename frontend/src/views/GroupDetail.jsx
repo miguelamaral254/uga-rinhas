@@ -4,6 +4,7 @@ import { Shuffle } from 'lucide-react';
 import { groupsService } from '../services/groupsService';
 import { groupMatchesService } from '../services/groupMatchesService';
 import { SearchBar } from '../components/common/SearchBar';
+import { MemberCard } from '../components/groups/MemberCard';
 
 const GroupDetail = () => {
   const { id } = useParams();
@@ -67,24 +68,20 @@ const GroupDetail = () => {
 
       <SearchBar placeholder="Buscar jogador..." onSearch={setQuery} />
 
-      <ul className="lol-lobby-checklist">
-        {filteredMembers.length === 0 ? (
-          <li className="lol-lobby-no-results">Nenhum jogador encontrado.</li>
-        ) : (
-          filteredMembers.map((member) => (
-            <li key={member.id}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={selectedIds.has(member.id)}
-                  onChange={() => toggleSelected(member.id)}
-                />
-                {member.display_name}
-              </label>
-            </li>
-          ))
-        )}
-      </ul>
+      {filteredMembers.length === 0 ? (
+        <div className="lol-lobby-no-results">Nenhum jogador encontrado.</div>
+      ) : (
+        <div className="lol-member-grid">
+          {filteredMembers.map((member) => (
+            <MemberCard
+              key={member.id}
+              member={member}
+              selected={selectedIds.has(member.id)}
+              onToggle={toggleSelected}
+            />
+          ))}
+        </div>
+      )}
 
       <button
         className="lol-sync-button"
