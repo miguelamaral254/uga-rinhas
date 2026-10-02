@@ -21,6 +21,13 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+const PublicOnlyRoute = ({ children }) => {
+  const { account, loading } = useAuth();
+  if (loading) return <LoadingScreen />;
+  if (account) return <Navigate to="/" replace />;
+  return children;
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -28,11 +35,46 @@ function App() {
         <Navbar />
         <main className="lol-main">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/players" element={<Players />} />
-            <Route path="/players/:id" element={<PlayerDetail />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            <Route
+              path="/login"
+              element={
+                <PublicOnlyRoute>
+                  <Login />
+                </PublicOnlyRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <PublicOnlyRoute>
+                  <Register />
+                </PublicOnlyRoute>
+              }
+            />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/players"
+              element={
+                <ProtectedRoute>
+                  <Players />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/players/:id"
+              element={
+                <ProtectedRoute>
+                  <PlayerDetail />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/groups"
               element={
@@ -49,7 +91,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/matches/:id" element={<GroupMatch />} />
+            <Route
+              path="/matches/:id"
+              element={
+                <ProtectedRoute>
+                  <GroupMatch />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/profile"
               element={
@@ -58,6 +107,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
       </Router>

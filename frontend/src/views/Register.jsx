@@ -44,59 +44,61 @@ const Register = () => {
   };
 
   return (
-    <div className="lol-auth">
-      <h1>Criar conta</h1>
-      <form onSubmit={handleSubmit} className="lol-auth-form">
-        <input
-          type="text"
-          placeholder="Usuário"
-          value={form.username}
-          onChange={update('username')}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Senha"
-          value={form.password}
-          onChange={update('password')}
-          minLength={8}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Confirmar senha"
-          value={form.passwordConfirmation}
-          onChange={update('passwordConfirmation')}
-          minLength={8}
-          required
-        />
-        <p className="lol-auth-hint">
-          A senha precisa ter 8+ caracteres, com maiúscula, minúscula, número e símbolo.
+    <div className="lol-auth-page">
+      <div className="lol-auth">
+        <h1>Criar conta</h1>
+        <form onSubmit={handleSubmit} className="lol-auth-form">
+          <input
+            type="text"
+            placeholder="Usuário"
+            value={form.username}
+            onChange={update('username')}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Senha"
+            value={form.password}
+            onChange={update('password')}
+            minLength={8}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Confirmar senha"
+            value={form.passwordConfirmation}
+            onChange={update('passwordConfirmation')}
+            minLength={8}
+            required
+          />
+          <p className="lol-auth-hint">
+            A senha precisa ter 8+ caracteres, com maiúscula, minúscula, número e símbolo.
+          </p>
+          <input
+            type="text"
+            placeholder="Apelido no grupo"
+            value={form.displayName}
+            onChange={update('displayName')}
+            required
+          />
+          <input
+            type="text"
+            placeholder="Riot ID (ex: Faker#KR1)"
+            value={form.riotId}
+            onChange={update('riotId')}
+            pattern=".+#.+"
+            title="Formato: nomeDeJogo#tag"
+            required
+          />
+          <button type="submit" disabled={loading}>
+            {loading ? 'Criando...' : 'Criar conta'}
+          </button>
+        </form>
+        {error && <p className="lol-form-error">{error}</p>}
+        <p className="lol-auth-switch">
+          Já tem conta? <Link to="/login">Entrar</Link>
         </p>
-        <input
-          type="text"
-          placeholder="Apelido no grupo"
-          value={form.displayName}
-          onChange={update('displayName')}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Riot ID (ex: Faker#KR1)"
-          value={form.riotId}
-          onChange={update('riotId')}
-          pattern=".+#.+"
-          title="Formato: nomeDeJogo#tag"
-          required
-        />
-        <button type="submit" disabled={loading}>
-          {loading ? 'Criando...' : 'Criar conta'}
-        </button>
-      </form>
-      {error && <p className="lol-form-error">{error}</p>}
-      <p className="lol-auth-switch">
-        Já tem conta? <Link to="/login">Entrar</Link>
-      </p>
+      </div>
     </div>
   );
 };

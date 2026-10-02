@@ -25,31 +25,33 @@ const Login = () => {
   };
 
   return (
-    <div className="lol-auth">
-      <h1>Entrar</h1>
-      <form onSubmit={handleSubmit} className="lol-auth-form">
-        <input
-          type="text"
-          placeholder="Usuário"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Senha"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit" disabled={loading}>
-          {loading ? 'Entrando...' : 'Entrar'}
-        </button>
-      </form>
-      {error && <p className="lol-form-error">{error}</p>}
-      <p className="lol-auth-switch">
-        Não tem conta? <Link to="/register">Criar conta</Link>
-      </p>
+    <div className="lol-auth-page">
+      <div className="lol-auth">
+        <h1>Entrar</h1>
+        <form onSubmit={handleSubmit} className="lol-auth-form">
+          <input
+            type="text"
+            placeholder="Usuário"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Senha"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button type="submit" disabled={loading}>
+            {loading ? 'Entrando...' : 'Entrar'}
+          </button>
+        </form>
+        {error && <p className="lol-form-error">{error}</p>}
+        <p className="lol-auth-switch">
+          Não tem conta? <Link to="/register">Criar conta</Link>
+        </p>
+      </div>
     </div>
   );
 };
