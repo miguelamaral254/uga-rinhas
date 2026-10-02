@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Play, Shuffle } from 'lucide-react';
+import { Play, RotateCcw, Shuffle } from 'lucide-react';
 import { groupMatchesService } from '../services/groupMatchesService';
 import { useAuth } from '../contexts/AuthContext';
 import { TeamMemberRow } from '../components/groups/TeamMemberRow';
@@ -63,6 +63,18 @@ const GroupMatch = () => {
     } catch (err) {
       setError(err.response?.data?.message || 'Não foi possível iniciar a partida.');
     } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleRematch = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const newMatch = await groupMatchesService.rematch(id);
+      navigate(`/matches/${newMatch.id}`);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Não foi possível iniciar a revanche.');
       setBusy(false);
     }
   };
@@ -150,12 +162,20 @@ const GroupMatch = () => {
 
       {match.status === 'FINISHED' && (
         <div className="lol-finish-actions">
-          <button
-            className="lol-sync-button"
-            onClick={() => navigate(`/groups/${match.group_id}`)}
-          >
-            <Shuffle size={16} /> Sortear outra partida
-          </button>
+          <div className="lol-rematch-buttons">
+            {isCaptain && (
+              <button className="lol-sync-button" onClick={handleRematch} disabled={busy}>
+                <RotateCcw size={16} /> {busy ? 'Iniciando...' : 'Iniciar outra partida (mesmo time)'}
+              </button>
+            )}
+            <button
+              className="lol-sync-button"
+              onClick={() => navigate(`/groups/${match.group_id}`)}
+              disabled={busy}
+            >
+              <Shuffle size={16} /> Sortear outra partida
+            </button>
+          </div>
         </div>
       )}
 

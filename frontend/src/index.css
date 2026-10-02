@@ -1053,6 +1053,12 @@ body {
   gap: 1rem;
 }
 
+.lol-rematch-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
 .lol-finish-button {
   flex: 1;
   padding: 0.8rem;

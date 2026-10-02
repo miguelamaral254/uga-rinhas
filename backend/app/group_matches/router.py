@@ -8,6 +8,7 @@ from app.auth.dependencies import CurrentPlayer
 from app.group_matches.begin_match_usecase import BeginMatchUseCase
 from app.group_matches.finish_match_usecase import FinishMatchRequest, FinishMatchUseCase
 from app.group_matches.get_match_usecase import GetMatchUseCase
+from app.group_matches.rematch_usecase import RematchUseCase
 from app.group_matches.repository import GroupMatchRepository
 from app.group_matches.start_match_usecase import (
     GroupMatchResponse,
@@ -47,6 +48,14 @@ async def begin(
     match_id: uuid.UUID, session: Session, current_player: CurrentPlayer
 ) -> GroupMatchResponse:
     use_case = BeginMatchUseCase(GroupMatchRepository(session), current_player)
+    return await use_case.execute(match_id)
+
+
+@router.post("/{match_id}/rematch", response_model=GroupMatchResponse, status_code=201)
+async def rematch(
+    match_id: uuid.UUID, session: Session, current_player: CurrentPlayer
+) -> GroupMatchResponse:
+    use_case = RematchUseCase(GroupMatchRepository(session), current_player)
     return await use_case.execute(match_id)
 
 
