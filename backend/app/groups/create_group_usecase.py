@@ -16,6 +16,7 @@ class GroupResponse(BaseModel):
     id: uuid.UUID
     name: str
     join_code: str
+    created_by: uuid.UUID
 
 
 class CreateGroupUseCase(UseCase[CreateGroupRequest, GroupResponse]):
@@ -31,6 +32,12 @@ class CreateGroupUseCase(UseCase[CreateGroupRequest, GroupResponse]):
             created_by=self._current_player.id,
         )
         await self._group_repository.save(group)
-        await self._group_repository.add_member(group.id, self._current_player.id)
+        await self._group_repository.add_member(group.id, self._current_player.id, status="APPROVED")
 
-        return GroupResponse(id=group.id, name=group.name, join_code=group.join_code)
+        return to_group_response(group)
+
+
+def to_group_response(group: Group) -> GroupResponse:
+    return GroupResponse(
+        id=group.id, name=group.name, join_code=group.join_code, created_by=group.created_by
+    )

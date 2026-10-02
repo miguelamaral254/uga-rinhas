@@ -611,15 +611,107 @@ body {
 
 .lol-member-row {
   width: 100%;
-  cursor: pointer;
   font: inherit;
   color: inherit;
-  text-align: left;
 }
 
 .lol-member-row.is-selected {
   border-color: var(--lol-gold);
   background: rgba(200, 170, 110, 0.08);
+}
+
+.lol-member-row-main {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.lol-member-row-selection-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--lol-text-muted);
+  display: flex;
+  flex-shrink: 0;
+}
+
+.lol-member-row.is-selected .lol-member-row-selection-btn {
+  color: var(--lol-gold);
+}
+
+.lol-member-row-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--lol-text-muted);
+  display: flex;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+
+.lol-member-row-remove:hover {
+  color: var(--lol-loss);
+}
+
+.lol-group-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lol-group-title-row h1 {
+  margin: 0;
+}
+
+.lol-leave-button {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: 1px solid var(--lol-loss);
+  color: var(--lol-loss);
+  padding: 0.5rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin: 0.5rem 0 1.5rem;
+}
+
+.lol-request-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.lol-request-approve,
+.lol-request-reject {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lol-request-approve {
+  background: var(--lol-win);
+  color: var(--lol-bg);
+}
+
+.lol-request-reject {
+  background: var(--lol-loss);
+  color: var(--lol-bg);
 }
 
 .lol-member-row-icon-frame {

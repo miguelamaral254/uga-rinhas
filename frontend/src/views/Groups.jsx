@@ -9,6 +9,7 @@ const Groups = () => {
   const [newGroupName, setNewGroupName] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState(null);
+  const [joinMessage, setJoinMessage] = useState(null);
   const [busy, setBusy] = useState(false);
 
   const fetchGroups = async () => {
@@ -44,10 +45,11 @@ const Groups = () => {
     e.preventDefault();
     setBusy(true);
     setError(null);
+    setJoinMessage(null);
     try {
-      await groupsService.join(joinCode);
+      const result = await groupsService.join(joinCode);
       setJoinCode('');
-      await fetchGroups();
+      setJoinMessage(`Solicitação enviada para "${result.group_name}". Aguarde o dono aprovar.`);
     } catch (err) {
       setError(err.response?.data?.message || 'Código inválido.');
     } finally {
@@ -88,6 +90,7 @@ const Groups = () => {
           </button>
         </form>
       </div>
+      {joinMessage && <p className="lol-auth-success">{joinMessage}</p>}
       {error && <p className="lol-form-error">{error}</p>}
 
       {groups.length === 0 ? (

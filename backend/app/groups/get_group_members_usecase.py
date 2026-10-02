@@ -2,7 +2,7 @@ import uuid
 
 from pydantic import BaseModel
 
-from app.groups.repository import GroupRepository
+from app.groups.repository import GroupMember, GroupRepository
 from app.infrastructure import ddragon
 from app.infrastructure.exceptions import ForbiddenError, ResourceNotFoundError
 from app.players.repository import Player
@@ -16,6 +16,21 @@ class GroupMemberResponse(BaseModel):
     riot_tag_line: str
     summoner_level: int | None
     profile_icon_url: str | None
+
+
+def to_member_response(member: GroupMember, version: str) -> GroupMemberResponse:
+    return GroupMemberResponse(
+        id=member.id,
+        display_name=member.display_name,
+        riot_game_name=member.riot_game_name,
+        riot_tag_line=member.riot_tag_line,
+        summoner_level=member.summoner_level,
+        profile_icon_url=(
+            ddragon.profile_icon_url(version, member.profile_icon_id)
+            if member.profile_icon_id
+            else None
+        ),
+    )
 
 
 class GetGroupMembersUseCase(UseCase[uuid.UUID, list[GroupMemberResponse]]):
@@ -33,18 +48,4 @@ class GetGroupMembersUseCase(UseCase[uuid.UUID, list[GroupMemberResponse]]):
         members = await self._group_repository.list_members(group_id)
         version = await ddragon.get_latest_version()
 
-        return [
-            GroupMemberResponse(
-                id=m.id,
-                display_name=m.display_name,
-                riot_game_name=m.riot_game_name,
-                riot_tag_line=m.riot_tag_line,
-                summoner_level=m.summoner_level,
-                profile_icon_url=(
-                    ddragon.profile_icon_url(version, m.profile_icon_id)
-                    if m.profile_icon_id
-                    else None
-                ),
-            )
-            for m in members
-        ]
+        return [to_member_response(m, version) for m in members]

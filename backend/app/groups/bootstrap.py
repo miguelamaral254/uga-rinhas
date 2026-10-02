@@ -22,9 +22,16 @@ _CREATE_GROUP_MEMBERS_TABLE = text("""
     )
 """)
 
+# Existing rows default to APPROVED (they joined back when it was instant) - only
+# new join requests start PENDING, pending the owner's review.
+_ADD_STATUS_COLUMN = text("""
+    ALTER TABLE lol.group_members ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'APPROVED'
+""")
+
 
 async def ensure_groups_tables(engine: AsyncEngine) -> None:
     async with engine.begin() as conn:
         await conn.execute(_CREATE_SCHEMA)
         await conn.execute(_CREATE_GROUPS_TABLE)
         await conn.execute(_CREATE_GROUP_MEMBERS_TABLE)
+        await conn.execute(_ADD_STATUS_COLUMN)

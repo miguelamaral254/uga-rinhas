@@ -7,4 +7,13 @@ export const groupsService = {
   join: async (joinCode) => (await api.post('/api/groups/join', { join_code: joinCode })).data,
   members: async (groupId) => (await api.get(`/api/groups/${groupId}/members`)).data,
   leaderboard: async (groupId) => (await api.get(`/api/groups/${groupId}/leaderboard`)).data,
+  updateName: async (groupId, name) =>
+    (await api.patch(`/api/groups/${groupId}`, { name })).data,
+  removeMember: async (groupId, playerId) =>
+    api.delete(`/api/groups/${groupId}/members/${playerId}`),
+  listRequests: async (groupId) => (await api.get(`/api/groups/${groupId}/requests`)).data,
+  approveRequest: async (groupId, playerId) =>
+    api.post(`/api/groups/${groupId}/requests/${playerId}/approve`),
+  rejectRequest: async (groupId, playerId) =>
+    api.post(`/api/groups/${groupId}/requests/${playerId}/reject`),
 };

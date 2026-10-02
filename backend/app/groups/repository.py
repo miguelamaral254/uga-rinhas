@@ -43,15 +43,39 @@ class GroupRepository:
         )
         await self._session.commit()
 
-    async def add_member(self, group_id: uuid.UUID, player_id: uuid.UUID) -> None:
+    async def update_name(self, group_id: uuid.UUID, name: str) -> None:
+        query = text("""
+            UPDATE lol.groups SET name = :name WHERE id = :id
+        """).bindparams(bindparam("id", type_=PG_UUID(as_uuid=True)))
+        await self._session.execute(query, {"id": group_id, "name": name})
+        await self._session.commit()
+
+    async def add_member(
+        self, group_id: uuid.UUID, player_id: uuid.UUID, status: str = "APPROVED"
+    ) -> None:
         await self._session.execute(
             text("""
-                INSERT INTO lol.group_members (group_id, player_id)
-                VALUES (:group_id, :player_id)
+                INSERT INTO lol.group_members (group_id, player_id, status)
+                VALUES (:group_id, :player_id, :status)
                 ON CONFLICT (group_id, player_id) DO NOTHING
             """),
-            {"group_id": group_id, "player_id": player_id},
+            {"group_id": group_id, "player_id": player_id, "status": status},
         )
+        await self._session.commit()
+
+    async def approve_member(self, group_id: uuid.UUID, player_id: uuid.UUID) -> None:
+        query = text("""
+            UPDATE lol.group_members SET status = 'APPROVED'
+            WHERE group_id = :group_id AND player_id = :player_id
+        """).bindparams(bindparam("group_id", type_=PG_UUID(as_uuid=True)))
+        await self._session.execute(query, {"group_id": group_id, "player_id": player_id})
+        await self._session.commit()
+
+    async def remove_member(self, group_id: uuid.UUID, player_id: uuid.UUID) -> None:
+        query = text("""
+            DELETE FROM lol.group_members WHERE group_id = :group_id AND player_id = :player_id
+        """).bindparams(bindparam("group_id", type_=PG_UUID(as_uuid=True)))
+        await self._session.execute(query, {"group_id": group_id, "player_id": player_id})
         await self._session.commit()
 
     async def find_by_id(self, group_id: uuid.UUID) -> Group | None:
@@ -70,12 +94,19 @@ class GroupRepository:
         row = result.first()
         return Group(**row._mapping) if row else None
 
-    async def is_member(self, group_id: uuid.UUID, player_id: uuid.UUID) -> bool:
+    async def find_membership_status(
+        self, group_id: uuid.UUID, player_id: uuid.UUID
+    ) -> str | None:
         query = text("""
-            SELECT 1 FROM lol.group_members WHERE group_id = :group_id AND player_id = :player_id
+            SELECT status FROM lol.group_members
+            WHERE group_id = :group_id AND player_id = :player_id
         """).bindparams(bindparam("group_id", type_=PG_UUID(as_uuid=True)))
         result = await self._session.execute(query, {"group_id": group_id, "player_id": player_id})
-        return result.first() is not None
+        row = result.first()
+        return row.status if row else None
+
+    async def is_member(self, group_id: uuid.UUID, player_id: uuid.UUID) -> bool:
+        return await self.find_membership_status(group_id, player_id) == "APPROVED"
 
     async def list_members(self, group_id: uuid.UUID) -> list[GroupMember]:
         query = text("""
@@ -83,8 +114,20 @@ class GroupRepository:
                    p.profile_icon_id, p.summoner_level
             FROM lol.group_members gm
             JOIN lol.players p ON p.id = gm.player_id
-            WHERE gm.group_id = :group_id
+            WHERE gm.group_id = :group_id AND gm.status = 'APPROVED'
             ORDER BY p.display_name
+        """).bindparams(bindparam("group_id", type_=PG_UUID(as_uuid=True)))
+        result = await self._session.execute(query, {"group_id": group_id})
+        return [GroupMember(**row._mapping) for row in result]
+
+    async def list_pending_members(self, group_id: uuid.UUID) -> list[GroupMember]:
+        query = text("""
+            SELECT p.id, p.display_name, p.riot_game_name, p.riot_tag_line,
+                   p.profile_icon_id, p.summoner_level
+            FROM lol.group_members gm
+            JOIN lol.players p ON p.id = gm.player_id
+            WHERE gm.group_id = :group_id AND gm.status = 'PENDING'
+            ORDER BY gm.joined_at
         """).bindparams(bindparam("group_id", type_=PG_UUID(as_uuid=True)))
         result = await self._session.execute(query, {"group_id": group_id})
         return [GroupMember(**row._mapping) for row in result]
@@ -94,7 +137,7 @@ class GroupRepository:
             SELECT g.id, g.name, g.join_code, g.created_by
             FROM lol.group_members gm
             JOIN lol.groups g ON g.id = gm.group_id
-            WHERE gm.player_id = :player_id
+            WHERE gm.player_id = :player_id AND gm.status = 'APPROVED'
             ORDER BY g.name
         """).bindparams(bindparam("player_id", type_=PG_UUID(as_uuid=True)))
         result = await self._session.execute(query, {"player_id": player_id})

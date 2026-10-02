@@ -1,4 +1,4 @@
-from app.groups.create_group_usecase import GroupResponse
+from app.groups.create_group_usecase import GroupResponse, to_group_response
 from app.groups.repository import GroupRepository
 from app.players.repository import Player
 from app.shared.usecase import NullaryUseCase
@@ -11,4 +11,4 @@ class ListMyGroupsUseCase(NullaryUseCase[list[GroupResponse]]):
 
     async def execute(self) -> list[GroupResponse]:
         groups = await self._group_repository.list_for_player(self._current_player.id)
-        return [GroupResponse(id=g.id, name=g.name, join_code=g.join_code) for g in groups]
+        return [to_group_response(g) for g in groups]
