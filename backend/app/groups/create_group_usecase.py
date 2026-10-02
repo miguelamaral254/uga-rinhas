@@ -17,6 +17,7 @@ class GroupResponse(BaseModel):
     name: str
     join_code: str
     created_by: uuid.UUID
+    owner_id: uuid.UUID
 
 
 class CreateGroupUseCase(UseCase[CreateGroupRequest, GroupResponse]):
@@ -30,6 +31,7 @@ class CreateGroupUseCase(UseCase[CreateGroupRequest, GroupResponse]):
             name=request.name,
             join_code=secrets.token_hex(3).upper(),
             created_by=self._current_player.id,
+            owner_id=self._current_player.id,
         )
         await self._group_repository.save(group)
         await self._group_repository.add_member(group.id, self._current_player.id, status="APPROVED")
@@ -39,5 +41,9 @@ class CreateGroupUseCase(UseCase[CreateGroupRequest, GroupResponse]):
 
 def to_group_response(group: Group) -> GroupResponse:
     return GroupResponse(
-        id=group.id, name=group.name, join_code=group.join_code, created_by=group.created_by
+        id=group.id,
+        name=group.name,
+        join_code=group.join_code,
+        created_by=group.created_by,
+        owner_id=group.owner_id,
     )

@@ -28,6 +28,16 @@ _ADD_STATUS_COLUMN = text("""
     ALTER TABLE lol.group_members ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'APPROVED'
 """)
 
+# owner_id is the transferable leadership slot; created_by stays fixed as history.
+# Existing groups start with owner_id = created_by.
+_ADD_OWNER_ID_COLUMN = text("""
+    ALTER TABLE lol.groups ADD COLUMN IF NOT EXISTS owner_id UUID REFERENCES lol.players (id)
+""")
+
+_BACKFILL_OWNER_ID = text("""
+    UPDATE lol.groups SET owner_id = created_by WHERE owner_id IS NULL
+""")
+
 
 async def ensure_groups_tables(engine: AsyncEngine) -> None:
     async with engine.begin() as conn:
@@ -35,3 +45,5 @@ async def ensure_groups_tables(engine: AsyncEngine) -> None:
         await conn.execute(_CREATE_GROUPS_TABLE)
         await conn.execute(_CREATE_GROUP_MEMBERS_TABLE)
         await conn.execute(_ADD_STATUS_COLUMN)
+        await conn.execute(_ADD_OWNER_ID_COLUMN)
+        await conn.execute(_BACKFILL_OWNER_ID)

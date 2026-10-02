@@ -22,6 +22,10 @@ from app.groups.join_requests_usecase import ListJoinRequestsUseCase, RespondToJ
 from app.groups.list_my_groups_usecase import ListMyGroupsUseCase
 from app.groups.remove_member_usecase import RemoveMemberUseCase
 from app.groups.repository import GroupRepository
+from app.groups.transfer_ownership_usecase import (
+    TransferOwnershipRequest,
+    TransferOwnershipUseCase,
+)
 from app.groups.update_group_usecase import UpdateGroupRequest, UpdateGroupUseCase
 from app.infrastructure.database import get_session
 from app.infrastructure.exceptions import ForbiddenError, ResourceNotFoundError
@@ -72,6 +76,17 @@ async def update_group(
     group_id: uuid.UUID, request: UpdateGroupRequest, session: Session, current_player: CurrentPlayer
 ) -> GroupResponse:
     use_case = UpdateGroupUseCase(GroupRepository(session), current_player)
+    return await use_case.execute(group_id, request)
+
+
+@router.post("/{group_id}/transfer-owner", response_model=GroupResponse)
+async def transfer_owner(
+    group_id: uuid.UUID,
+    request: TransferOwnershipRequest,
+    session: Session,
+    current_player: CurrentPlayer,
+) -> GroupResponse:
+    use_case = TransferOwnershipUseCase(GroupRepository(session), current_player)
     return await use_case.execute(group_id, request)
 
 

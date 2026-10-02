@@ -686,6 +686,11 @@ body {
   margin: 0.5rem 0 1.5rem;
 }
 
+.lol-leave-button--gold {
+  border-color: var(--lol-gold);
+  color: var(--lol-gold);
+}
+
 .lol-request-actions {
   display: flex;
   gap: 0.5rem;
@@ -880,12 +885,14 @@ body {
   gap: 0.75rem;
 }
 
-.lol-auth-form input {
+.lol-auth-form input,
+.lol-auth-form select {
   padding: 0.6rem;
   background: var(--lol-surface);
   border: 1px solid var(--lol-border);
   border-radius: 6px;
   color: var(--lol-text);
+  font: inherit;
 }
 
 .lol-auth-form button {

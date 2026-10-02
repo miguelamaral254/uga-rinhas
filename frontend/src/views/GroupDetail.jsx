@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Shuffle, Pencil, LogOut } from 'lucide-react';
+import { Shuffle, Pencil, LogOut, Crown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { groupsService } from '../services/groupsService';
 import { groupMatchesService } from '../services/groupMatchesService';
@@ -25,8 +25,10 @@ const GroupDetail = () => {
 
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
+  const [transferTargetId, setTransferTargetId] = useState('');
 
-  const isOwner = group && account && group.created_by === account.id;
+  const isOwner = group && account && group.owner_id === account.id;
 
   const fetchAll = async () => {
     const [groupData, membersData] = await Promise.all([
@@ -39,7 +41,7 @@ const GroupDetail = () => {
       const next = new Set(membersData.map((m) => m.id));
       return prev.size === 0 ? next : new Set([...prev].filter((pid) => next.has(pid)));
     });
-    if (account && groupData.created_by === account.id) {
+    if (account && groupData.owner_id === account.id) {
       setRequests(await groupsService.listRequests(id));
     }
   };
@@ -86,6 +88,17 @@ const GroupDetail = () => {
       setEditingName(false);
     } catch (err) {
       setError(err.response?.data?.message || 'Não foi possível renomear o grupo.');
+    }
+  };
+
+  const handleTransferOwnership = async (e) => {
+    e.preventDefault();
+    try {
+      setGroup(await groupsService.transferOwnership(id, transferTargetId));
+      setTransferModalOpen(false);
+      setTransferTargetId('');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Não foi possível transferir a liderança.');
     }
   };
 
@@ -142,6 +155,16 @@ const GroupDetail = () => {
       <p className="lol-lobby-subtitle">
         Código de convite: <strong>{group.join_code}</strong>
       </p>
+
+      {isOwner && members.length > 1 && (
+        <button
+          type="button"
+          className="lol-leave-button lol-leave-button--gold"
+          onClick={() => setTransferModalOpen(true)}
+        >
+          <Crown size={14} /> Transferir liderança
+        </button>
+      )}
 
       {!isOwner && (
         <button type="button" className="lol-leave-button" onClick={handleLeave}>
@@ -200,6 +223,36 @@ const GroupDetail = () => {
             required
           />
           <button type="submit">Salvar</button>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={transferModalOpen}
+        onClose={() => setTransferModalOpen(false)}
+        title="Transferir liderança"
+      >
+        <form onSubmit={handleTransferOwnership} className="lol-auth-form">
+          <p className="lol-auth-hint">
+            Escolha quem vai virar o novo dono do grupo. Você perde os poderes de dono
+            imediatamente.
+          </p>
+          <select
+            value={transferTargetId}
+            onChange={(e) => setTransferTargetId(e.target.value)}
+            required
+          >
+            <option value="" disabled>
+              Selecione um membro
+            </option>
+            {members
+              .filter((m) => m.id !== account.id)
+              .map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.display_name}
+                </option>
+              ))}
+          </select>
+          <button type="submit">Confirmar transferência</button>
         </form>
       </Modal>
     </div>

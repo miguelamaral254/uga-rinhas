@@ -16,4 +16,6 @@ export const groupsService = {
     api.post(`/api/groups/${groupId}/requests/${playerId}/approve`),
   rejectRequest: async (groupId, playerId) =>
     api.post(`/api/groups/${groupId}/requests/${playerId}/reject`),
+  transferOwnership: async (groupId, newOwnerId) =>
+    (await api.post(`/api/groups/${groupId}/transfer-owner`, { new_owner_id: newOwnerId })).data,
 };

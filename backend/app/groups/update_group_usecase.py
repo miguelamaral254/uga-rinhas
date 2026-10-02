@@ -21,7 +21,7 @@ class UpdateGroupUseCase:
         group = await self._group_repository.find_by_id(group_id)
         if group is None:
             raise ResourceNotFoundError("group.notFound")
-        if group.created_by != self._current_player.id:
+        if group.owner_id != self._current_player.id:
             raise ForbiddenError("group.notTheOwner")
 
         await self._group_repository.update_name(group_id, request.name)

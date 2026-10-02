@@ -12,6 +12,7 @@ class Group:
     name: str
     join_code: str
     created_by: uuid.UUID
+    owner_id: uuid.UUID
 
 
 @dataclass(frozen=True)
@@ -24,6 +25,9 @@ class GroupMember:
     summoner_level: int | None
 
 
+_GROUP_FIELDS = "id, name, join_code, created_by, owner_id"
+
+
 class GroupRepository:
     def __init__(self, session: AsyncSession):
         self._session = session
@@ -31,14 +35,15 @@ class GroupRepository:
     async def save(self, group: Group) -> None:
         await self._session.execute(
             text("""
-                INSERT INTO lol.groups (id, name, join_code, created_by)
-                VALUES (:id, :name, :join_code, :created_by)
+                INSERT INTO lol.groups (id, name, join_code, created_by, owner_id)
+                VALUES (:id, :name, :join_code, :created_by, :owner_id)
             """),
             {
                 "id": group.id,
                 "name": group.name,
                 "join_code": group.join_code,
                 "created_by": group.created_by,
+                "owner_id": group.owner_id,
             },
         )
         await self._session.commit()
@@ -48,6 +53,13 @@ class GroupRepository:
             UPDATE lol.groups SET name = :name WHERE id = :id
         """).bindparams(bindparam("id", type_=PG_UUID(as_uuid=True)))
         await self._session.execute(query, {"id": group_id, "name": name})
+        await self._session.commit()
+
+    async def update_owner(self, group_id: uuid.UUID, new_owner_id: uuid.UUID) -> None:
+        query = text("""
+            UPDATE lol.groups SET owner_id = :owner_id WHERE id = :id
+        """).bindparams(bindparam("id", type_=PG_UUID(as_uuid=True)))
+        await self._session.execute(query, {"id": group_id, "owner_id": new_owner_id})
         await self._session.commit()
 
     async def add_member(
@@ -79,8 +91,8 @@ class GroupRepository:
         await self._session.commit()
 
     async def find_by_id(self, group_id: uuid.UUID) -> Group | None:
-        query = text("""
-            SELECT id, name, join_code, created_by FROM lol.groups WHERE id = :id
+        query = text(f"""
+            SELECT {_GROUP_FIELDS} FROM lol.groups WHERE id = :id
         """).bindparams(bindparam("id", type_=PG_UUID(as_uuid=True)))
         result = await self._session.execute(query, {"id": group_id})
         row = result.first()
@@ -88,7 +100,7 @@ class GroupRepository:
 
     async def find_by_join_code(self, join_code: str) -> Group | None:
         result = await self._session.execute(
-            text("SELECT id, name, join_code, created_by FROM lol.groups WHERE join_code = :code"),
+            text(f"SELECT {_GROUP_FIELDS} FROM lol.groups WHERE join_code = :code"),
             {"code": join_code},
         )
         row = result.first()
@@ -133,8 +145,8 @@ class GroupRepository:
         return [GroupMember(**row._mapping) for row in result]
 
     async def list_for_player(self, player_id: uuid.UUID) -> list[Group]:
-        query = text("""
-            SELECT g.id, g.name, g.join_code, g.created_by
+        query = text(f"""
+            SELECT {', '.join(f'g.{f}' for f in _GROUP_FIELDS.split(', '))}
             FROM lol.group_members gm
             JOIN lol.groups g ON g.id = gm.group_id
             WHERE gm.player_id = :player_id AND gm.status = 'APPROVED'
