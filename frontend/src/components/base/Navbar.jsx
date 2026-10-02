@@ -34,10 +34,10 @@ export const Navbar = () => {
   );
 
   const Brand = () => (
-    <span className="lol-navbar-brand-group">
+    <Link to="/" className="lol-navbar-brand-group" onClick={closeMenu}>
       <img src="/images/udyr-mascot.jpeg" alt="" className="lol-navbar-mascot" />
       <span className="lol-navbar-brand">Uga Rinhas</span>
-    </span>
+    </Link>
   );
 
   if (!account) {
