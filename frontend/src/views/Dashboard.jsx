@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { playersService } from '../services/playersService';
 import { groupMatchesService } from '../services/groupMatchesService';
+import { LoadingScreen } from '../components/common/LoadingScreen';
 
 const formatDuration = (totalSeconds) => {
   const minutes = Math.floor(totalSeconds / 60)
@@ -37,7 +38,7 @@ const Dashboard = () => {
       .finally(() => setLoading(false));
   }, [account]);
 
-  if (authLoading || loading) return <div className="loading-screen">Carregando...</div>;
+  if (authLoading || loading) return <LoadingScreen />;
 
   if (!account) {
     return (

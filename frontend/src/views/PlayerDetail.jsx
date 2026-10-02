@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { playersService } from '../services/playersService';
 import { matchesService } from '../services/matchesService';
+import { LoadingScreen } from '../components/common/LoadingScreen';
 
 const ROLE_ORDER = ['Topo', 'Selva', 'Meio', 'Atirador', 'Suporte', 'Não identificada'];
 
@@ -21,7 +22,7 @@ const PlayerDetail = () => {
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div className="loading-screen">Carregando jogador...</div>;
+  if (loading) return <LoadingScreen label="Carregando jogador" />;
   if (!profile) return <div className="lol-empty">Jogador não encontrado.</div>;
 
   const maxRoleGames = Math.max(1, ...profile.roles.map((r) => r.games));

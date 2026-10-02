@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, LogIn } from 'lucide-react';
 import { groupsService } from '../services/groupsService';
+import { LoadingScreen } from '../components/common/LoadingScreen';
 
 const Groups = () => {
   const [groups, setGroups] = useState([]);
@@ -57,7 +58,7 @@ const Groups = () => {
     }
   };
 
-  if (loading) return <div className="loading-screen">Carregando grupos...</div>;
+  if (loading) return <LoadingScreen label="Carregando grupos" />;
 
   return (
     <div className="lol-groups">

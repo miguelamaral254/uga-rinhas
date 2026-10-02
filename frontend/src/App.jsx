@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Navbar } from './components/base/Navbar';
+import { LoadingScreen } from './components/common/LoadingScreen';
 import Dashboard from './views/Dashboard';
 import Players from './views/Players';
 import PlayerDetail from './views/PlayerDetail';
@@ -15,7 +16,7 @@ import './index.css';
 
 const ProtectedRoute = ({ children }) => {
   const { account, loading } = useAuth();
-  if (loading) return <div className="loading-screen">Carregando...</div>;
+  if (loading) return <LoadingScreen />;
   if (!account) return <Navigate to="/login" replace />;
   return children;
 };

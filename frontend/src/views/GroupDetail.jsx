@@ -7,6 +7,7 @@ import { groupMatchesService } from '../services/groupMatchesService';
 import { SearchBar } from '../components/common/SearchBar';
 import { PaginatedGrid } from '../components/common/PaginatedGrid';
 import { Modal } from '../components/common/Modal';
+import { LoadingScreen } from '../components/common/LoadingScreen';
 import { MemberCard } from '../components/groups/MemberCard';
 import { JoinRequestRow } from '../components/groups/JoinRequestRow';
 import { GroupPodium } from '../components/groups/GroupPodium';
@@ -133,7 +134,7 @@ const GroupDetail = () => {
     setRequests((prev) => prev.filter((r) => r.id !== playerId));
   };
 
-  if (loading) return <div className="loading-screen">Carregando grupo...</div>;
+  if (loading) return <LoadingScreen label="Carregando grupo" />;
   if (!group) return <div className="lol-empty">Grupo não encontrado.</div>;
 
   return (

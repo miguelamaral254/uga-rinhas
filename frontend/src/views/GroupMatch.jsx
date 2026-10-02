@@ -4,6 +4,7 @@ import { Play, RotateCcw, Shuffle } from 'lucide-react';
 import { groupMatchesService } from '../services/groupMatchesService';
 import { useAuth } from '../contexts/AuthContext';
 import { TeamMemberRow } from '../components/groups/TeamMemberRow';
+import { LoadingScreen } from '../components/common/LoadingScreen';
 
 const formatDuration = (totalSeconds) => {
   const minutes = Math.floor(totalSeconds / 60)
@@ -91,7 +92,7 @@ const GroupMatch = () => {
     }
   };
 
-  if (loading) return <div className="loading-screen">Carregando partida...</div>;
+  if (loading) return <LoadingScreen label="Carregando partida" />;
   if (!match) return <div className="lol-empty">Partida não encontrada.</div>;
 
   return (

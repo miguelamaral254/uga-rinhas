@@ -3,6 +3,7 @@ import { playersService } from '../services/playersService';
 import { PlayerCard } from '../components/players/PlayerCard';
 import { SearchBar } from '../components/common/SearchBar';
 import { PaginatedGrid } from '../components/common/PaginatedGrid';
+import { LoadingScreen } from '../components/common/LoadingScreen';
 
 const Players = () => {
   const [players, setPlayers] = useState([]);
@@ -25,7 +26,7 @@ const Players = () => {
     );
   }, [players, query]);
 
-  if (loading) return <div className="loading-screen">Carregando jogadores...</div>;
+  if (loading) return <LoadingScreen label="Carregando jogadores" />;
 
   return (
     <div className="lol-players">
