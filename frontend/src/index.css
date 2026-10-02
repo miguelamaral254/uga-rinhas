@@ -1198,6 +1198,50 @@ h2 {
   font-size: 0.9rem;
 }
 
+.lol-podium--red .lol-podium-slot {
+  border-color: var(--lol-loss);
+}
+
+.lol-podium--red .lol-podium-slot--first {
+  box-shadow: 0 0 20px rgba(248, 81, 73, 0.25);
+}
+
+.lol-podium--red .lol-podium-slot--second,
+.lol-podium--red .lol-podium-slot--third {
+  opacity: 0.85;
+}
+
+.lol-podium--red .lol-podium-slot .lol-podium-rank {
+  color: var(--lol-loss);
+}
+
+.lol-podium--red .lol-podium-wins {
+  color: var(--lol-loss);
+}
+
+.lol-podium--red .lol-podium-crown {
+  color: var(--lol-loss);
+}
+
+.lol-podium-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.lol-podium-heading {
+  font-size: 0.85rem;
+  color: var(--lol-gold);
+  margin: 0 0 0.6rem;
+}
+
+.lol-podium-heading--red {
+  color: var(--lol-loss);
+}
+
 @media (max-width: 640px) {
   .lol-group-header {
     flex-direction: column;

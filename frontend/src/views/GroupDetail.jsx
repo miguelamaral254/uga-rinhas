@@ -301,6 +301,17 @@ const GroupDetail = () => {
 
       {activeTab === 'historico' && (
         <section className="lol-profile-section">
+          <div className="lol-podium-row">
+            <div>
+              <h2 className="lol-podium-heading">Mais vitórias</h2>
+              <GroupPodium entries={leaderboard} metric="wins" />
+            </div>
+            <div>
+              <h2 className="lol-podium-heading lol-podium-heading--red">Mais derrotas</h2>
+              <GroupPodium entries={leaderboard} metric="losses" variant="red" />
+            </div>
+          </div>
+
           {matchHistory.length === 0 ? (
             <p className="lol-profile-section-empty">Nenhuma rinha registrada ainda.</p>
           ) : (
