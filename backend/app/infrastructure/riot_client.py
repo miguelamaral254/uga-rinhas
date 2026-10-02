@@ -11,6 +11,13 @@ from app.infrastructure.exceptions import RiotApiUnavailableError
 # fixed delay keeps us well under both without needing a sliding-window counter.
 _MIN_INTERVAL_SECONDS = 1.2
 
+# Rank and mastery are looked up on every profile/dashboard view, but barely change
+# minute to minute - a short-lived cache avoids hitting Riot on every page load.
+_CACHE_TTL_SECONDS = 300
+
+_league_entries_cache: dict[str, tuple[float, list[dict]]] = {}
+_masteries_cache: dict[tuple[str, int], tuple[float, list[dict]]] = {}
+
 
 class RiotClient:
     def __init__(self):
@@ -48,15 +55,28 @@ class RiotClient:
         return await self._get(url)
 
     async def get_league_entries_by_puuid(self, puuid: str) -> list[dict]:
+        cached = _league_entries_cache.get(puuid)
+        if cached and time.monotonic() - cached[0] < _CACHE_TTL_SECONDS:
+            return cached[1]
+
         url = f"https://{self._platform}.api.riotgames.com/lol/league/v4/entries/by-puuid/{puuid}"
-        return await self._get(url) or []
+        entries = await self._get(url) or []
+        _league_entries_cache[puuid] = (time.monotonic(), entries)
+        return entries
 
     async def get_top_champion_masteries(self, puuid: str, count: int = 5) -> list[dict]:
+        cache_key = (puuid, count)
+        cached = _masteries_cache.get(cache_key)
+        if cached and time.monotonic() - cached[0] < _CACHE_TTL_SECONDS:
+            return cached[1]
+
         url = (
             f"https://{self._platform}.api.riotgames.com/lol/champion-mastery/v4/"
             f"champion-masteries/by-puuid/{puuid}/top?count={count}"
         )
-        return await self._get(url) or []
+        masteries = await self._get(url) or []
+        _masteries_cache[cache_key] = (time.monotonic(), masteries)
+        return masteries
 
     async def _get(self, url: str) -> dict | list | None:
         async with self._lock:
