@@ -25,22 +25,20 @@ export const PaginatedGrid = ({
       <div className={listClassName}>
         {pageItems.map((item, i) => renderItem(item, start + i))}
       </div>
-      {totalPages > 1 && (
-        <div className="lol-pagination">
-          <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={currentPage === 0}>
-            <ChevronLeft size={16} />
-          </button>
-          <span>
-            Página {currentPage + 1} de {totalPages}
-          </span>
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-            disabled={currentPage === totalPages - 1}
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      )}
+      <div className="lol-pagination">
+        <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={currentPage === 0}>
+          <ChevronLeft size={16} />
+        </button>
+        <span>
+          Página {currentPage + 1} de {totalPages}
+        </span>
+        <button
+          onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+          disabled={currentPage === totalPages - 1}
+        >
+          <ChevronRight size={16} />
+        </button>
+      </div>
     </div>
   );
 };

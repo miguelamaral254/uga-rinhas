@@ -71,7 +71,6 @@ const GroupDetail = () => {
 
       <PaginatedGrid
         items={filteredMembers}
-        listClassName="lol-member-grid"
         emptyMessage="Nenhum jogador encontrado."
         renderItem={(member) => (
           <MemberCard
