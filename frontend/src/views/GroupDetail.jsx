@@ -13,6 +13,8 @@ import { JoinRequestRow } from '../components/groups/JoinRequestRow';
 import { GroupPodium } from '../components/groups/GroupPodium';
 import { TeamBuilder } from '../components/groups/TeamBuilder';
 
+const MAX_PLAYERS = 10;
+
 const formatDuration = (totalSeconds) => {
   const minutes = Math.floor(totalSeconds / 60)
     .toString()
@@ -72,7 +74,7 @@ const GroupDetail = () => {
     setMembers(membersData);
     setLeaderboard(leaderboardData);
     setSelectedIds((prev) => {
-      const next = new Set(membersData.map((m) => m.id));
+      const next = new Set(membersData.slice(0, MAX_PLAYERS).map((m) => m.id));
       return prev.size === 0 ? next : new Set([...prev].filter((pid) => next.has(pid)));
     });
     if (account && groupData.owner_id === account.id) {
@@ -107,8 +109,16 @@ const GroupDetail = () => {
   const toggleSelected = (memberId) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(memberId)) next.delete(memberId);
-      else next.add(memberId);
+      if (next.has(memberId)) {
+        next.delete(memberId);
+      } else {
+        if (next.size >= MAX_PLAYERS) {
+          setError(`Uma rinha tem no máximo ${MAX_PLAYERS} jogadores (5 por time).`);
+          return prev;
+        }
+        next.add(memberId);
+      }
+      setError(null);
       return next;
     });
   };

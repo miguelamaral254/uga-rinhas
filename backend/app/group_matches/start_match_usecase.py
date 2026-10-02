@@ -62,6 +62,8 @@ class StartMatchUseCase(UseCase[StartMatchRequest, GroupMatchResponse]):
 
         if not request.team_blue_ids or not request.team_red_ids:
             raise ValidationError("match.emptyTeam")
+        if len(request.team_blue_ids) > 5 or len(request.team_red_ids) > 5:
+            raise ValidationError("match.teamTooLarge")
         if set(request.team_blue_ids) & set(request.team_red_ids):
             raise ValidationError("match.playerOnBothTeams")
 
