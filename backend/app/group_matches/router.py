@@ -8,6 +8,10 @@ from app.auth.dependencies import CurrentPlayer
 from app.group_matches.begin_match_usecase import BeginMatchUseCase
 from app.group_matches.finish_match_usecase import FinishMatchRequest, FinishMatchUseCase
 from app.group_matches.get_match_usecase import GetMatchUseCase
+from app.group_matches.get_player_match_history_usecase import (
+    GetPlayerMatchHistoryUseCase,
+    PlayerMatchHistoryResponse,
+)
 from app.group_matches.rematch_usecase import RematchUseCase
 from app.group_matches.repository import GroupMatchRepository
 from app.group_matches.start_match_usecase import (
@@ -35,6 +39,12 @@ async def start(
         current_player,
     )
     return await use_case.execute(request)
+
+
+@router.get("/player/{player_id}/history", response_model=PlayerMatchHistoryResponse)
+async def player_history(player_id: uuid.UUID, session: Session) -> PlayerMatchHistoryResponse:
+    use_case = GetPlayerMatchHistoryUseCase(GroupMatchRepository(session))
+    return await use_case.execute(player_id)
 
 
 @router.get("/{match_id}", response_model=GroupMatchResponse)

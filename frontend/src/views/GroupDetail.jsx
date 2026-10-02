@@ -9,6 +9,7 @@ import { PaginatedGrid } from '../components/common/PaginatedGrid';
 import { Modal } from '../components/common/Modal';
 import { MemberCard } from '../components/groups/MemberCard';
 import { JoinRequestRow } from '../components/groups/JoinRequestRow';
+import { GroupPodium } from '../components/groups/GroupPodium';
 
 const GroupDetail = () => {
   const { id } = useParams();
@@ -17,6 +18,7 @@ const GroupDetail = () => {
   const [group, setGroup] = useState(null);
   const [members, setMembers] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -30,12 +32,14 @@ const GroupDetail = () => {
   const isOwner = group && account && group.owner_id === account.id;
 
   const fetchAll = async () => {
-    const [groupData, membersData] = await Promise.all([
+    const [groupData, membersData, leaderboardData] = await Promise.all([
       groupsService.getById(id),
       groupsService.members(id),
+      groupsService.leaderboard(id),
     ]);
     setGroup(groupData);
     setMembers(membersData);
+    setLeaderboard(leaderboardData);
     setSelectedIds((prev) => {
       const next = new Set(membersData.map((m) => m.id));
       return prev.size === 0 ? next : new Set([...prev].filter((pid) => next.has(pid)));
@@ -134,31 +138,37 @@ const GroupDetail = () => {
 
   return (
     <div className="lol-lobby">
-      <div className="lol-group-title-row">
-        <h1>{group.name}</h1>
-        {isOwner && (
-          <button
-            type="button"
-            className="lol-nav-icon-btn"
-            onClick={() => {
-              setNameDraft(group.name);
-              setEditingName(true);
-            }}
-            aria-label="Editar nome do grupo"
-          >
-            <Pencil size={16} />
-          </button>
-        )}
-      </div>
-      <p className="lol-lobby-subtitle">
-        Código de convite: <strong>{group.join_code}</strong>
-      </p>
+      <div className="lol-group-header">
+        <div className="lol-group-header-main">
+          <div className="lol-group-title-row">
+            <h1>{group.name}</h1>
+            {isOwner && (
+              <button
+                type="button"
+                className="lol-nav-icon-btn"
+                onClick={() => {
+                  setNameDraft(group.name);
+                  setEditingName(true);
+                }}
+                aria-label="Editar nome do grupo"
+              >
+                <Pencil size={16} />
+              </button>
+            )}
+          </div>
+          <p className="lol-lobby-subtitle">
+            Código de convite: <strong>{group.join_code}</strong>
+          </p>
 
-      {!isOwner && (
-        <button type="button" className="lol-leave-button" onClick={handleLeave}>
-          <LogOut size={14} /> Sair do grupo
-        </button>
-      )}
+          {!isOwner && (
+            <button type="button" className="lol-leave-button" onClick={handleLeave}>
+              <LogOut size={14} /> Sair do grupo
+            </button>
+          )}
+        </div>
+
+        <GroupPodium entries={leaderboard} />
+      </div>
 
       {isOwner && requests.length > 0 && (
         <section className="lol-profile-section">

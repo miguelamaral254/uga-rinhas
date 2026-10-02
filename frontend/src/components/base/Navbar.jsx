@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Swords, Users, UsersRound, UserCog, LogIn, LogOut } from 'lucide-react';
+import { Menu, X, Home, Users, UsersRound, UserCog, LogIn, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 export const Navbar = () => {
@@ -18,7 +18,7 @@ export const Navbar = () => {
   };
 
   const links = [
-    { to: '/', label: 'Placar', icon: Swords },
+    { to: '/', label: 'Início', icon: Home },
     { to: '/players', label: 'Jogadores', icon: Users },
     ...(account
       ? [

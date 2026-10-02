@@ -77,6 +77,34 @@ class GroupMatchRepository:
         row = result.first()
         return GroupMatch(**row._mapping) if row else None
 
+    async def list_finished_for_player(self, player_id: uuid.UUID) -> list[tuple[GroupMatch, str]]:
+        query = text("""
+            SELECT gm.id, gm.group_id, gm.team_blue, gm.team_red, gm.captain_blue_id,
+                   gm.captain_red_id, gm.status, gm.winning_team, gm.started_at, gm.ended_at,
+                   gm.duration_seconds, g.name AS group_name
+            FROM lol.group_matches gm
+            JOIN lol.groups g ON g.id = gm.group_id
+            WHERE gm.status = 'FINISHED'
+              AND (
+                EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(gm.team_blue) p
+                    WHERE (p->>'id')::uuid = :player_id
+                )
+                OR EXISTS (
+                    SELECT 1 FROM jsonb_array_elements(gm.team_red) p
+                    WHERE (p->>'id')::uuid = :player_id
+                )
+              )
+            ORDER BY gm.ended_at DESC
+        """).bindparams(bindparam("player_id", type_=PG_UUID(as_uuid=True)))
+        result = await self._session.execute(query, {"player_id": player_id})
+        entries = []
+        for row in result:
+            mapping = dict(row._mapping)
+            group_name = mapping.pop("group_name")
+            entries.append((GroupMatch(**mapping), group_name))
+        return entries
+
     async def list_finished_by_group(self, group_id: uuid.UUID) -> list[GroupMatch]:
         query = text("""
             SELECT id, group_id, team_blue, team_red, captain_blue_id, captain_red_id,

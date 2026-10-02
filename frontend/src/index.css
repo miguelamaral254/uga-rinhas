@@ -700,6 +700,18 @@ body {
   border-color: var(--lol-loss);
 }
 
+.lol-group-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.lol-group-header-main {
+  min-width: 0;
+}
+
 .lol-group-title-row {
   display: flex;
   align-items: center;
@@ -708,6 +720,67 @@ body {
 
 .lol-group-title-row h1 {
   margin: 0;
+}
+
+.lol-podium {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.lol-podium-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--lol-border);
+  background: var(--lol-surface);
+  min-width: 84px;
+}
+
+.lol-podium-slot--first {
+  border-color: var(--lol-gold);
+  padding-top: 0.9rem;
+  padding-bottom: 0.9rem;
+}
+
+.lol-podium-crown {
+  color: var(--lol-gold);
+}
+
+.lol-podium-rank {
+  font-size: 0.75rem;
+  color: var(--lol-text-muted);
+}
+
+.lol-podium-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+.lol-podium-wins {
+  color: var(--lol-win);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .lol-group-header {
+    flex-direction: column;
+  }
+
+  .lol-podium {
+    align-self: stretch;
+    justify-content: center;
+  }
 }
 
 .lol-leave-button {
