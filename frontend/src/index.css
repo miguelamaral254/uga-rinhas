@@ -620,6 +620,10 @@ h2 {
   background: rgba(200, 170, 110, 0.05);
 }
 
+.lol-clickable-row {
+  cursor: pointer;
+}
+
 .lol-match-table a,
 .lol-match-table a:visited {
   color: var(--lol-gold-light);

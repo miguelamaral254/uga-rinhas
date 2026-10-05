@@ -23,6 +23,7 @@ import { JoinRequestRow } from '../components/groups/JoinRequestRow';
 import { GroupPodium } from '../components/groups/GroupPodium';
 import { GroupLeaderCard } from '../components/groups/GroupLeaderCard';
 import { TeamBuilder } from '../components/groups/TeamBuilder';
+import { TeamMemberRow } from '../components/groups/TeamMemberRow';
 
 const REQUIRED_PLAYERS = 10;
 const MAX_IMAGE_BYTES = 1024 * 1024;
@@ -77,6 +78,7 @@ const GroupDetail = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [groupSaving, setGroupSaving] = useState(false);
   const [managingMember, setManagingMember] = useState(null);
+  const [selectedMatch, setSelectedMatch] = useState(null);
 
   const isOwner = group && account && group.owner_id === account.id;
 
@@ -383,7 +385,11 @@ const GroupDetail = () => {
               </thead>
               <tbody>
                 {matchHistory.map((match) => (
-                  <tr key={match.match_id}>
+                  <tr
+                    key={match.match_id}
+                    className="lol-clickable-row"
+                    onClick={() => setSelectedMatch(match)}
+                  >
                     <td>{new Date(match.ended_at).toLocaleString('pt-BR')}</td>
                     <td className={match.winning_team === 'BLUE' ? 'lol-win' : undefined}>
                       {match.team_blue.map((p) => p.display_name).join(', ')}
@@ -538,6 +544,55 @@ const GroupDetail = () => {
             <UserMinus size={16} /> Remover do grupo
           </button>
         </div>
+      </Modal>
+
+      <Modal
+        isOpen={!!selectedMatch}
+        onClose={() => setSelectedMatch(null)}
+        title="Detalhes da rinha"
+      >
+        {selectedMatch && (
+          <>
+            <div className="lol-match-status">
+              <span className="lol-match-timer lol-match-timer--finished">
+                Vitória do Time {selectedMatch.winning_team === 'BLUE' ? 'Azul' : 'Vermelho'} ·{' '}
+                {formatDuration(selectedMatch.duration_seconds)}
+              </span>
+            </div>
+            <p className="lol-lobby-subtitle">
+              {new Date(selectedMatch.ended_at).toLocaleString('pt-BR')}
+            </p>
+
+            <div className="lol-teams-grid">
+              <div className="lol-team lol-team--blue">
+                <h2>
+                  Time Azul
+                  {selectedMatch.winning_team === 'BLUE' && (
+                    <Crown size={14} className="lol-captain-icon" />
+                  )}
+                </h2>
+                <div className="lol-player-list">
+                  {selectedMatch.team_blue.map((p) => (
+                    <TeamMemberRow key={p.id} player={p} />
+                  ))}
+                </div>
+              </div>
+              <div className="lol-team lol-team--red">
+                <h2>
+                  Time Vermelho
+                  {selectedMatch.winning_team === 'RED' && (
+                    <Crown size={14} className="lol-captain-icon" />
+                  )}
+                </h2>
+                <div className="lol-player-list">
+                  {selectedMatch.team_red.map((p) => (
+                    <TeamMemberRow key={p.id} player={p} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </Modal>
     </div>
   );
