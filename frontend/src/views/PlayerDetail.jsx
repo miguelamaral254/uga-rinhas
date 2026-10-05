@@ -32,6 +32,16 @@ const formatRelativeTime = (isoDate) => {
   return `${years} ano${years > 1 ? 's' : ''} atrás`;
 };
 
+const ItemSlots = ({ items, className = '' }) => (
+  <div className={`lol-match-items ${className}`.trim()}>
+    {items.map((url, i) => (
+      <div key={i} className="lol-match-item-slot">
+        {url && <img src={url} alt="" className="lol-match-item-icon" />}
+      </div>
+    ))}
+  </div>
+);
+
 const MatchRosterEntry = ({ player }) => {
   const content = (
     <>
@@ -80,11 +90,7 @@ const MatchHistoryCard = ({ match, onClick }) => (
           ))}
         </div>
       </div>
-      <div className="lol-match-items lol-match-card-items">
-        {match.item_icon_urls.map((url, i) => (
-          <img key={i} src={url} alt="" className="lol-match-item-icon" />
-        ))}
-      </div>
+      <ItemSlots items={match.item_icon_urls} className="lol-match-card-items" />
     </div>
 
     <div className="lol-match-card-kda">
@@ -125,18 +131,12 @@ const MatchParticipantRow = ({ participant, highlighted }) => (
         <img key={i} src={url} alt="" className="lol-match-card-spell-icon" />
       ))}
     </div>
-    <div className="lol-player-info">
-      <p className="lol-player-name">{participant.display_name}</p>
-      <p className="lol-match-participant-kda">
-        {participant.kills} / <span className="lol-loss">{participant.deaths}</span> /{' '}
-        {participant.assists}
-      </p>
-      <div className="lol-match-items">
-        {participant.item_icon_urls.map((url, i) => (
-          <img key={i} src={url} alt="" className="lol-match-item-icon" />
-        ))}
-      </div>
-    </div>
+    <p className="lol-match-detail-name">{participant.display_name}</p>
+    <p className="lol-match-participant-kda">
+      {participant.kills} / <span className="lol-loss">{participant.deaths}</span> /{' '}
+      {participant.assists}
+    </p>
+    <ItemSlots items={participant.item_icon_urls} />
   </div>
 );
 
@@ -356,7 +356,7 @@ const PlayerDetail = () => {
         isOpen={!!selectedMatchId}
         onClose={() => setSelectedMatchId(null)}
         title="Detalhes da partida"
-        size="lg"
+        size="xl"
       >
         {matchDetail && (
           <>

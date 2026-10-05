@@ -43,7 +43,7 @@ class PlayerMatchSummaryResponse(BaseModel):
     kda_ratio: float
     kill_participation: int
     cs: int
-    item_icon_urls: list[str]
+    item_icon_urls: list[str | None]
     teammates: list[MatchPlayerRef]
     opponents: list[MatchPlayerRef]
 
@@ -74,7 +74,7 @@ class ListPlayerMatchesUseCase(UseCase[uuid.UUID, list[PlayerMatchSummaryRespons
         teammates = [
             self._to_player_ref(p, version)
             for p in m.participants_raw
-            if p.get("player_id") != self_id and p["team_id"] == self_team_id
+            if p["team_id"] == self_team_id
         ]
         opponents = [
             self._to_player_ref(p, version)
@@ -102,9 +102,7 @@ class ListPlayerMatchesUseCase(UseCase[uuid.UUID, list[PlayerMatchSummaryRespons
             kda_ratio=round((m.kills + m.assists) / max(m.deaths, 1), 2),
             kill_participation=m.kill_participation,
             cs=m.cs,
-            item_icon_urls=[
-                ddragon.item_icon_url(version, item_id) for item_id in m.items if item_id
-            ],
+            item_icon_urls=ddragon.item_icon_slots(version, m.items),
             teammates=teammates,
             opponents=opponents,
         )

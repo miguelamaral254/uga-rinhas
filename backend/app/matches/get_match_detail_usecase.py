@@ -21,7 +21,7 @@ class MatchParticipantDetail(BaseModel):
     deaths: int
     assists: int
     team_position: str
-    item_icon_urls: list[str]
+    item_icon_urls: list[str | None]
 
 
 class MatchDetail(BaseModel):
@@ -62,11 +62,7 @@ class GetMatchDetailUseCase(UseCase[str, MatchDetail]):
                 deaths=p["deaths"],
                 assists=p["assists"],
                 team_position=p["team_position"],
-                item_icon_urls=[
-                    ddragon.item_icon_url(version, item_id)
-                    for item_id in p["items"]
-                    if item_id
-                ],
+                item_icon_urls=ddragon.item_icon_slots(version, p["items"]),
             )
             for p in match.participants_raw
         ]

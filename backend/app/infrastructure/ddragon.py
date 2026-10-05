@@ -64,6 +64,13 @@ def item_icon_url(version: str, item_id: int) -> str:
     return f"https://ddragon.leagueoflegends.com/cdn/{version}/img/item/{item_id}.png"
 
 
+def item_icon_slots(version: str, item_ids: list[int]) -> list[str | None]:
+    """One entry per inventory slot (None for an empty slot) so the UI can always
+    reserve the same width instead of shrinking down to however many items were
+    actually bought."""
+    return [item_icon_url(version, item_id) if item_id else None for item_id in item_ids]
+
+
 def rank_emblem_url(tier: str) -> str:
     # Not Data Dragon - Riot doesn't publish rank emblems there. Community Dragon
     # mirrors the game's own assets and is what every LoL stats site uses for this.

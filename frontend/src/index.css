@@ -648,31 +648,37 @@ h2 {
 
 .lol-match-items {
   display: flex;
-  gap: 0.25rem;
-  flex-wrap: wrap;
+  gap: 3px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
-.lol-match-item-icon {
+.lol-match-item-slot {
   width: 22px;
   height: 22px;
   border-radius: 4px;
   border: 1px solid var(--lol-border);
+  background: rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+.lol-match-item-icon {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  display: block;
 }
 
 .lol-match-participant-row {
-  gap: 0.5rem 0.6rem;
+  gap: 0.45rem;
   align-items: center;
-}
-
-.lol-match-participant-row .lol-player-info {
+  flex-wrap: nowrap;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
 }
 
-.lol-match-participant-row .lol-player-name {
-  font-size: 0.85rem;
+.lol-match-participant-row .lol-match-item-slot {
+  width: 18px;
+  height: 18px;
 }
 
 .lol-match-participant-row.is-selected {
@@ -680,11 +686,22 @@ h2 {
   box-shadow: 0 0 0 1px var(--lol-border-gold) inset;
 }
 
+.lol-match-detail-name {
+  flex: 1 1 auto;
+  min-width: 70px;
+  margin: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .lol-match-participant-kda {
   margin: 0;
   font-weight: 600;
   font-size: 0.82rem;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .lol-match-card-list {
@@ -832,11 +849,16 @@ h2 {
   flex-direction: column;
   gap: 0.35rem;
   flex-shrink: 0;
-  width: 130px;
+  width: 148px;
 }
 
 .lol-match-card-items {
   flex-shrink: 0;
+}
+
+.lol-match-card-items .lol-match-item-slot {
+  width: 18px;
+  height: 18px;
 }
 
 .lol-match-card-roster {
@@ -1694,6 +1716,7 @@ a.lol-match-card-roster-entry:hover {
   padding: 1rem 1.25rem;
   background: linear-gradient(145deg, var(--lol-surface-2), var(--lol-surface));
   border: 1px solid var(--lol-border);
+  min-width: 0;
 }
 
 .lol-team h2 {
@@ -1708,6 +1731,12 @@ a.lol-match-card-roster-entry:hover {
 
 .lol-team--blue {
   border-color: #3b82f6;
+  background: linear-gradient(
+    145deg,
+    rgba(59, 130, 246, 0.16),
+    rgba(59, 130, 246, 0.04) 60%,
+    var(--lol-surface)
+  );
 }
 
 .lol-team--blue h2 {
@@ -1716,6 +1745,12 @@ a.lol-match-card-roster-entry:hover {
 
 .lol-team--red {
   border-color: var(--lol-loss);
+  background: linear-gradient(
+    145deg,
+    rgba(248, 81, 73, 0.16),
+    rgba(248, 81, 73, 0.04) 60%,
+    var(--lol-surface)
+  );
 }
 
 .lol-team--red h2 {
@@ -2170,6 +2205,10 @@ button.lol-group-card {
 
 .lol-modal--lg {
   max-width: 640px;
+}
+
+.lol-modal--xl {
+  max-width: 1000px;
 }
 
 .lol-modal-header {
