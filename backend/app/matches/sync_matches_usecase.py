@@ -10,11 +10,10 @@ from app.players.repository import Player, PlayerRepository
 from app.shared.usecase import NullaryUseCase
 
 _SUMMONERS_RIFT_MAP_ID = 11
-_CUSTOM_QUEUE_ID = 0
-# queue=0 filters server-side to custom games only (Riot does the work, not us) -
-# 100 (its max) is still "how far back to look among customs only", so it
-# effectively covers a group's entire custom history in practice.
-_MATCH_HISTORY_DEPTH = 100
+# Custom games (queue=0) are RSO-gated and 404 for a non-RSO key, so this pulls
+# the player's most recent Summoner's Rift matches regardless of queue instead -
+# ranked, normals, whatever - just so the profile UI has real data to render.
+_MATCH_HISTORY_DEPTH = 20
 
 
 class SyncResult(BaseModel):
@@ -44,7 +43,7 @@ class SyncMatchesUseCase(NullaryUseCase[SyncResult]):
 
             try:
                 match_ids = await self._riot_client.get_match_ids_by_puuid(
-                    player.puuid, count=_MATCH_HISTORY_DEPTH, queue=_CUSTOM_QUEUE_ID
+                    player.puuid, count=_MATCH_HISTORY_DEPTH
                 )
             except RiotApiUnavailableError:
                 continue
@@ -57,7 +56,7 @@ class SyncMatchesUseCase(NullaryUseCase[SyncResult]):
                 seen_match_ids.add(match_id)
 
                 try:
-                    match = await self._fetch_custom_5x5_match(match_id, player_id_by_puuid)
+                    match = await self._fetch_match(match_id, player_id_by_puuid)
                 except RiotApiUnavailableError:
                     continue
 
@@ -78,7 +77,7 @@ class SyncMatchesUseCase(NullaryUseCase[SyncResult]):
                 player.id, summoner["profileIconId"], summoner["summonerLevel"]
             )
 
-    async def _fetch_custom_5x5_match(
+    async def _fetch_match(
         self, match_id: str, player_id_by_puuid: dict[str, uuid.UUID]
     ) -> Match | None:
         data = await self._riot_client.get_match(match_id)
@@ -86,11 +85,7 @@ class SyncMatchesUseCase(NullaryUseCase[SyncResult]):
             return None
 
         info = data["info"]
-        if (
-            info["queueId"] != _CUSTOM_QUEUE_ID
-            or info["mapId"] != _SUMMONERS_RIFT_MAP_ID
-            or len(info["participants"]) != 10
-        ):
+        if info["mapId"] != _SUMMONERS_RIFT_MAP_ID or len(info["participants"]) != 10:
             return None
 
         participants = [
