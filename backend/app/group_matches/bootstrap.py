@@ -19,6 +19,33 @@ _CREATE_TABLE = text("""
     )
 """)
 
+# A match now has a single leader (the player who drew/arranged it) instead of
+# one captain per team - only that leader can begin or finish the match.
+_ADD_LEADER_ID = text("""
+    ALTER TABLE lol.group_matches ADD COLUMN IF NOT EXISTS leader_id UUID
+""")
+
+_BACKFILL_LEADER_ID = text("""
+    DO $$
+    BEGIN
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'lol' AND table_name = 'group_matches'
+              AND column_name = 'captain_blue_id'
+        ) THEN
+            UPDATE lol.group_matches SET leader_id = captain_blue_id WHERE leader_id IS NULL;
+        END IF;
+    END $$;
+""")
+
+_DROP_CAPTAIN_BLUE_ID = text("""
+    ALTER TABLE lol.group_matches DROP COLUMN IF EXISTS captain_blue_id
+""")
+
+_DROP_CAPTAIN_RED_ID = text("""
+    ALTER TABLE lol.group_matches DROP COLUMN IF EXISTS captain_red_id
+""")
+
 _CREATE_GROUP_INDEX = text("""
     CREATE INDEX IF NOT EXISTS idx_group_matches_group ON lol.group_matches (group_id)
 """)
@@ -46,3 +73,7 @@ async def ensure_group_matches_table(engine: AsyncEngine) -> None:
         await conn.execute(_DROP_STARTED_AT_DEFAULT)
         await conn.execute(_DROP_STARTED_AT_NOT_NULL)
         await conn.execute(_DROP_STATUS_DEFAULT)
+        await conn.execute(_ADD_LEADER_ID)
+        await conn.execute(_BACKFILL_LEADER_ID)
+        await conn.execute(_DROP_CAPTAIN_BLUE_ID)
+        await conn.execute(_DROP_CAPTAIN_RED_ID)

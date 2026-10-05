@@ -3,6 +3,7 @@ import uuid
 from dataclasses import dataclass
 
 from sqlalchemy import bindparam, text
+from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,13 +15,16 @@ class GroupMatch:
     group_id: uuid.UUID
     team_blue: list[dict]
     team_red: list[dict]
-    captain_blue_id: uuid.UUID
-    captain_red_id: uuid.UUID
+    leader_id: uuid.UUID
     status: str
     winning_team: str | None
     started_at: datetime.datetime | None
     ended_at: datetime.datetime | None
     duration_seconds: int | None
+
+
+_FIELDS = """id, group_id, team_blue, team_red, leader_id, status, winning_team,
+             started_at, ended_at, duration_seconds"""
 
 
 class GroupMatchRepository:
@@ -30,18 +34,15 @@ class GroupMatchRepository:
     async def save(self, match: GroupMatch) -> None:
         query = text("""
             INSERT INTO lol.group_matches
-                (id, group_id, team_blue, team_red, captain_blue_id, captain_red_id, status,
-                 started_at)
+                (id, group_id, team_blue, team_red, leader_id, status, started_at)
             VALUES
-                (:id, :group_id, :team_blue, :team_red, :captain_blue_id, :captain_red_id, :status,
-                 :started_at)
+                (:id, :group_id, :team_blue, :team_red, :leader_id, :status, :started_at)
         """).bindparams(
             bindparam("id", type_=PG_UUID(as_uuid=True)),
             bindparam("group_id", type_=PG_UUID(as_uuid=True)),
             bindparam("team_blue", type_=JSONB),
             bindparam("team_red", type_=JSONB),
-            bindparam("captain_blue_id", type_=PG_UUID(as_uuid=True)),
-            bindparam("captain_red_id", type_=PG_UUID(as_uuid=True)),
+            bindparam("leader_id", type_=PG_UUID(as_uuid=True)),
         )
         await self._session.execute(
             query,
@@ -50,8 +51,7 @@ class GroupMatchRepository:
                 "group_id": match.group_id,
                 "team_blue": match.team_blue,
                 "team_red": match.team_red,
-                "captain_blue_id": match.captain_blue_id,
-                "captain_red_id": match.captain_red_id,
+                "leader_id": match.leader_id,
                 "status": match.status,
                 "started_at": match.started_at,
             },
@@ -67,9 +67,8 @@ class GroupMatchRepository:
         await self._session.commit()
 
     async def find_by_id(self, match_id: uuid.UUID) -> GroupMatch | None:
-        query = text("""
-            SELECT id, group_id, team_blue, team_red, captain_blue_id, captain_red_id,
-                   status, winning_team, started_at, ended_at, duration_seconds
+        query = text(f"""
+            SELECT {_FIELDS}
             FROM lol.group_matches
             WHERE id = :id
         """).bindparams(bindparam("id", type_=PG_UUID(as_uuid=True)))
@@ -77,11 +76,25 @@ class GroupMatchRepository:
         row = result.first()
         return GroupMatch(**row._mapping) if row else None
 
-    async def list_finished_for_player(self, player_id: uuid.UUID) -> list[tuple[GroupMatch, str]]:
+    async def find_players_in_progress(self, player_ids: list[uuid.UUID]) -> list[uuid.UUID]:
+        """Which of the given player ids are currently rostered on a match that's
+        already IN_PROGRESS (in any group) - used to block them from being drafted
+        into a second match at the same time."""
+        if not player_ids:
+            return []
         query = text("""
-            SELECT gm.id, gm.group_id, gm.team_blue, gm.team_red, gm.captain_blue_id,
-                   gm.captain_red_id, gm.status, gm.winning_team, gm.started_at, gm.ended_at,
-                   gm.duration_seconds, g.name AS group_name
+            SELECT DISTINCT (p->>'id')::uuid AS player_id
+            FROM lol.group_matches gm,
+                 jsonb_array_elements(gm.team_blue || gm.team_red) AS p
+            WHERE gm.status = 'IN_PROGRESS'
+              AND (p->>'id')::uuid = ANY(:player_ids)
+        """).bindparams(bindparam("player_ids", type_=PG_ARRAY(PG_UUID(as_uuid=True))))
+        result = await self._session.execute(query, {"player_ids": player_ids})
+        return [row.player_id for row in result]
+
+    async def list_finished_for_player(self, player_id: uuid.UUID) -> list[tuple[GroupMatch, str]]:
+        query = text(f"""
+            SELECT {', '.join(f'gm.{f.strip()}' for f in _FIELDS.split(','))}, g.name AS group_name
             FROM lol.group_matches gm
             JOIN lol.groups g ON g.id = gm.group_id
             WHERE gm.status = 'FINISHED'
@@ -106,9 +119,8 @@ class GroupMatchRepository:
         return entries
 
     async def list_finished_by_group(self, group_id: uuid.UUID) -> list[GroupMatch]:
-        query = text("""
-            SELECT id, group_id, team_blue, team_red, captain_blue_id, captain_red_id,
-                   status, winning_team, started_at, ended_at, duration_seconds
+        query = text(f"""
+            SELECT {_FIELDS}
             FROM lol.group_matches
             WHERE group_id = :group_id AND status = 'FINISHED'
         """).bindparams(bindparam("group_id", type_=PG_UUID(as_uuid=True)))
@@ -118,9 +130,8 @@ class GroupMatchRepository:
     async def list_recent_finished_by_group(
         self, group_id: uuid.UUID, limit: int = 10
     ) -> list[GroupMatch]:
-        query = text("""
-            SELECT id, group_id, team_blue, team_red, captain_blue_id, captain_red_id,
-                   status, winning_team, started_at, ended_at, duration_seconds
+        query = text(f"""
+            SELECT {_FIELDS}
             FROM lol.group_matches
             WHERE group_id = :group_id AND status = 'FINISHED'
             ORDER BY ended_at DESC

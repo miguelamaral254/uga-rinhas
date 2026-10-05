@@ -9,7 +9,7 @@ const ZONES = [
   { key: 'red', title: 'Time Vermelho', className: 'lol-team--red', max: MAX_TEAM_SIZE },
 ];
 
-export const TeamBuilder = ({ pool, teamBlue, teamRed, onChange }) => {
+export const TeamBuilder = ({ pool, teamBlue, teamRed, leaderId, onChange }) => {
   const [dragOverZone, setDragOverZone] = useState(null);
   const [error, setError] = useState(null);
   const zoneItems = { pool, blue: teamBlue, red: teamRed };
@@ -76,14 +76,14 @@ export const TeamBuilder = ({ pool, teamBlue, teamRed, onChange }) => {
               {zoneItems[key].length === 0 && (
                 <p className="lol-profile-section-empty">Arraste jogadores pra cá.</p>
               )}
-              {zoneItems[key].map((player, index) => (
+              {zoneItems[key].map((player) => (
                 <div
                   key={player.id}
                   draggable
                   onDragStart={(e) => e.dataTransfer.setData('text/plain', player.id)}
                   className="lol-draggable-row"
                 >
-                  <TeamMemberRow player={player} isCaptain={key !== 'pool' && index === 0} />
+                  <TeamMemberRow player={player} isCaptain={player.id === leaderId} />
                 </div>
               ))}
             </div>

@@ -11,7 +11,7 @@ from app.players.repository import Player, PlayerRepository
 class BeginMatchUseCase:
     """Starts the clock on a drafted match. Drawing teams (StartMatchUseCase) only
     creates the DRAFT - the timer and IN_PROGRESS status begin here instead, once
-    either captain confirms both sides are actually ready to play."""
+    the match's leader confirms both sides are actually ready to play."""
 
     def __init__(
         self,
@@ -27,8 +27,8 @@ class BeginMatchUseCase:
         match = await self._match_repository.find_by_id(match_id)
         if match is None:
             raise ResourceNotFoundError("match.notFound")
-        if self._current_player.id not in (match.captain_blue_id, match.captain_red_id):
-            raise ForbiddenError("match.notACaptain")
+        if self._current_player.id != match.leader_id:
+            raise ForbiddenError("match.notTheLeader")
         if match.status != "DRAFT":
             raise ValidationError("match.alreadyStarted")
 

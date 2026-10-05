@@ -6,9 +6,16 @@ from pydantic import BaseModel
 from app.group_matches.repository import GroupMatch, GroupMatchRepository
 from app.groups.repository import GroupRepository
 from app.infrastructure import ddragon
-from app.infrastructure.exceptions import ForbiddenError, ResourceNotFoundError, ValidationError
+from app.infrastructure.exceptions import (
+    ConflictError,
+    ForbiddenError,
+    ResourceNotFoundError,
+    ValidationError,
+)
 from app.players.repository import Player, PlayerRepository
 from app.shared.usecase import UseCase
+
+TEAM_SIZE = 5
 
 
 class StartMatchRequest(BaseModel):
@@ -31,8 +38,7 @@ class GroupMatchResponse(BaseModel):
     group_id: uuid.UUID
     team_blue: list[MatchPlayer]
     team_red: list[MatchPlayer]
-    captain_blue_id: uuid.UUID
-    captain_red_id: uuid.UUID
+    leader_id: uuid.UUID
     status: str
     winning_team: str | None
     started_at: datetime.datetime | None
@@ -60,20 +66,26 @@ class StartMatchUseCase(UseCase[StartMatchRequest, GroupMatchResponse]):
         if not await self._group_repository.is_member(request.group_id, self._current_player.id):
             raise ForbiddenError("group.notAMember")
 
-        if not request.team_blue_ids or not request.team_red_ids:
-            raise ValidationError("match.emptyTeam")
-        if len(request.team_blue_ids) > 5 or len(request.team_red_ids) > 5:
-            raise ValidationError("match.teamTooLarge")
+        if len(request.team_blue_ids) != TEAM_SIZE or len(request.team_red_ids) != TEAM_SIZE:
+            raise ValidationError("match.teamSizeInvalid")
         if set(request.team_blue_ids) & set(request.team_red_ids):
             raise ValidationError("match.playerOnBothTeams")
 
+        selected_ids = set(request.team_blue_ids) | set(request.team_red_ids)
+        if self._current_player.id not in selected_ids:
+            raise ValidationError("match.leaderMustPlay")
+
         members = await self._group_repository.list_members(request.group_id)
         member_ids = {m.id for m in members}
-        selected_ids = set(request.team_blue_ids) | set(request.team_red_ids)
         if not selected_ids.issubset(member_ids):
             raise ValidationError("match.playerNotInGroup")
-        if len(selected_ids) < 2:
-            raise ValidationError("match.notEnoughPlayers")
+
+        locked_ids = await self._match_repository.find_players_in_progress(list(selected_ids))
+        if locked_ids:
+            locked_players = await self._player_repository.list_by_ids(locked_ids)
+            names = ", ".join(p.display_name for p in locked_players)
+            verb = "está" if len(locked_players) == 1 else "estão"
+            raise ConflictError(f"{names} já {verb} em outra partida.")
 
         players_by_id = {
             p.id: p for p in await self._player_repository.list_by_ids(list(selected_ids))
@@ -88,8 +100,7 @@ class StartMatchUseCase(UseCase[StartMatchRequest, GroupMatchResponse]):
             group_id=request.group_id,
             team_blue=[p.model_dump(mode="json") for p in team_blue],
             team_red=[p.model_dump(mode="json") for p in team_red],
-            captain_blue_id=team_blue[0].id,
-            captain_red_id=team_red[0].id,
+            leader_id=self._current_player.id,
             status="DRAFT",
             winning_team=None,
             started_at=None,
@@ -103,8 +114,7 @@ class StartMatchUseCase(UseCase[StartMatchRequest, GroupMatchResponse]):
             group_id=match.group_id,
             team_blue=team_blue,
             team_red=team_red,
-            captain_blue_id=match.captain_blue_id,
-            captain_red_id=match.captain_red_id,
+            leader_id=match.leader_id,
             status=match.status,
             winning_team=None,
             started_at=None,

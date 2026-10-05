@@ -14,7 +14,7 @@ import { GroupPodium } from '../components/groups/GroupPodium';
 import { GroupLeaderCard } from '../components/groups/GroupLeaderCard';
 import { TeamBuilder } from '../components/groups/TeamBuilder';
 
-const MAX_PLAYERS = 10;
+const REQUIRED_PLAYERS = 10;
 
 const formatDuration = (totalSeconds) => {
   const minutes = Math.floor(totalSeconds / 60)
@@ -78,7 +78,7 @@ const GroupDetail = () => {
     setLeaderboard(leaderboardData);
     setLeader(leaderData);
     setSelectedIds((prev) => {
-      const next = new Set(membersData.slice(0, MAX_PLAYERS).map((m) => m.id));
+      const next = new Set(membersData.slice(0, REQUIRED_PLAYERS).map((m) => m.id));
       return prev.size === 0 ? next : new Set([...prev].filter((pid) => next.has(pid)));
     });
     if (account && groupData.owner_id === account.id) {
@@ -116,8 +116,8 @@ const GroupDetail = () => {
       if (next.has(memberId)) {
         next.delete(memberId);
       } else {
-        if (next.size >= MAX_PLAYERS) {
-          setError(`Uma rinha tem no máximo ${MAX_PLAYERS} jogadores (5 por time).`);
+        if (next.size >= REQUIRED_PLAYERS) {
+          setError(`Uma rinha precisa de exatamente ${REQUIRED_PLAYERS} jogadores (5 por time).`);
           return prev;
         }
         next.add(memberId);
@@ -146,6 +146,13 @@ const GroupDetail = () => {
   };
 
   const handleConfirmStart = async () => {
+    const isLeaderInTeam =
+      teamBlue.some((p) => p.id === account.id) || teamRed.some((p) => p.id === account.id);
+    if (!isLeaderInTeam) {
+      setError('Você precisa estar em um dos times para liderar a partida.');
+      return;
+    }
+
     setStarting(true);
     setError(null);
     try {
@@ -363,12 +370,16 @@ const GroupDetail = () => {
                 )}
               />
 
+              <p className="lol-lobby-subtitle">
+                Selecionados: {selectedIds.size}/{REQUIRED_PLAYERS}
+              </p>
+
               <div className="lol-rematch-buttons">
                 <button
                   type="button"
                   className="lol-sync-button"
                   onClick={handleShuffleAndNext}
-                  disabled={selectedIds.size < 2}
+                  disabled={selectedIds.size !== REQUIRED_PLAYERS}
                 >
                   <Shuffle size={16} /> Sortear e iniciar partida
                 </button>
@@ -376,7 +387,7 @@ const GroupDetail = () => {
                   type="button"
                   className="lol-sync-button"
                   onClick={handleNext}
-                  disabled={selectedIds.size < 2}
+                  disabled={selectedIds.size !== REQUIRED_PLAYERS}
                 >
                   Próximo <ArrowRight size={16} />
                 </button>
@@ -390,6 +401,7 @@ const GroupDetail = () => {
                 pool={pool}
                 teamBlue={teamBlue}
                 teamRed={teamRed}
+                leaderId={account.id}
                 onChange={(nextPool, nextBlue, nextRed) => {
                   setPool(nextPool);
                   setTeamBlue(nextBlue);

@@ -16,12 +16,12 @@ const formatDuration = (totalSeconds) => {
   return `${minutes}:${seconds}`;
 };
 
-const TeamColumn = ({ title, className, players, captainId }) => (
+const TeamColumn = ({ title, className, players, leaderId }) => (
   <div className={`lol-team ${className}`}>
     <h2>{title}</h2>
     <div className="lol-player-list">
       {players.map((p) => (
-        <TeamMemberRow key={p.id} player={p} isCaptain={p.id === captainId} />
+        <TeamMemberRow key={p.id} player={p} isCaptain={p.id === leaderId} />
       ))}
     </div>
   </div>
@@ -53,8 +53,7 @@ const GroupMatch = () => {
     return () => clearInterval(interval);
   }, [match]);
 
-  const isCaptain =
-    match && account && (account.id === match.captain_blue_id || account.id === match.captain_red_id);
+  const isLeader = match && account && account.id === match.leader_id;
 
   const handleBegin = async () => {
     setBusy(true);
@@ -120,17 +119,17 @@ const GroupMatch = () => {
           title="Time Azul"
           className="lol-team--blue"
           players={match.team_blue}
-          captainId={match.captain_blue_id}
+          leaderId={match.leader_id}
         />
         <TeamColumn
           title="Time Vermelho"
           className="lol-team--red"
           players={match.team_red}
-          captainId={match.captain_red_id}
+          leaderId={match.leader_id}
         />
       </div>
 
-      {match.status === 'DRAFT' && isCaptain && (
+      {match.status === 'DRAFT' && isLeader && (
         <div className="lol-finish-actions">
           <p>Confira os times. Quando todos estiverem prontos, inicie a partida.</p>
           <button className="lol-sync-button" onClick={handleBegin} disabled={busy}>
@@ -139,9 +138,9 @@ const GroupMatch = () => {
         </div>
       )}
 
-      {match.status === 'IN_PROGRESS' && isCaptain && (
+      {match.status === 'IN_PROGRESS' && isLeader && (
         <div className="lol-finish-actions">
-          <p>Você é capitão — só você e o outro capitão podem finalizar a partida.</p>
+          <p>Você é o líder da partida — só você pode finalizá-la.</p>
           <div className="lol-finish-buttons">
             <button
               className="lol-finish-button lol-finish-button--blue"
@@ -164,7 +163,7 @@ const GroupMatch = () => {
       {match.status === 'FINISHED' && (
         <div className="lol-finish-actions">
           <div className="lol-rematch-buttons">
-            {isCaptain && (
+            {isLeader && (
               <button className="lol-sync-button" onClick={handleRematch} disabled={busy}>
                 <RotateCcw size={16} /> {busy ? 'Iniciando...' : 'Iniciar outra partida (mesmo time)'}
               </button>

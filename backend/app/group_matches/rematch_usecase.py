@@ -4,7 +4,12 @@ import uuid
 from app.group_matches.get_match_usecase import GetMatchUseCase
 from app.group_matches.repository import GroupMatch, GroupMatchRepository
 from app.group_matches.start_match_usecase import GroupMatchResponse
-from app.infrastructure.exceptions import ForbiddenError, ResourceNotFoundError, ValidationError
+from app.infrastructure.exceptions import (
+    ConflictError,
+    ForbiddenError,
+    ResourceNotFoundError,
+    ValidationError,
+)
 from app.players.repository import Player, PlayerRepository
 
 
@@ -24,18 +29,25 @@ class RematchUseCase:
         if match is None:
             raise ResourceNotFoundError("match.notFound")
 
-        if self._current_player.id not in (match.captain_blue_id, match.captain_red_id):
-            raise ForbiddenError("match.notACaptain")
+        if self._current_player.id != match.leader_id:
+            raise ForbiddenError("match.notTheLeader")
         if match.status != "FINISHED":
             raise ValidationError("match.notFinished")
+
+        roster_ids = [uuid.UUID(p["id"]) for p in match.team_blue + match.team_red]
+        locked_ids = await self._match_repository.find_players_in_progress(roster_ids)
+        if locked_ids:
+            locked_players = await self._player_repository.list_by_ids(locked_ids)
+            names = ", ".join(p.display_name for p in locked_players)
+            verb = "está" if len(locked_players) == 1 else "estão"
+            raise ConflictError(f"{names} já {verb} em outra partida.")
 
         new_match = GroupMatch(
             id=uuid.uuid4(),
             group_id=match.group_id,
             team_blue=match.team_blue,
             team_red=match.team_red,
-            captain_blue_id=match.captain_blue_id,
-            captain_red_id=match.captain_red_id,
+            leader_id=match.leader_id,
             status="IN_PROGRESS",
             winning_team=None,
             started_at=datetime.datetime.now(datetime.UTC),
