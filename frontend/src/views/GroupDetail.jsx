@@ -24,19 +24,11 @@ import { GroupPodium } from '../components/groups/GroupPodium';
 import { GroupLeaderCard } from '../components/groups/GroupLeaderCard';
 import { TeamBuilder } from '../components/groups/TeamBuilder';
 import { TeamMemberRow } from '../components/groups/TeamMemberRow';
+import { MatchRosterEntry } from '../components/matches/MatchRosterEntry';
+import { formatDuration, formatRelativeTime } from '../utils/matchFormat';
 
 const REQUIRED_PLAYERS = 10;
 const MAX_IMAGE_BYTES = 1024 * 1024;
-
-const formatDuration = (totalSeconds) => {
-  const minutes = Math.floor(totalSeconds / 60)
-    .toString()
-    .padStart(2, '0');
-  const seconds = Math.floor(totalSeconds % 60)
-    .toString()
-    .padStart(2, '0');
-  return `${minutes}:${seconds}`;
-};
 
 const shuffleArray = (items) => {
   const copy = [...items];
@@ -46,6 +38,47 @@ const shuffleArray = (items) => {
   }
   return copy;
 };
+
+const GroupMatchCard = ({ match, onClick }) => (
+  <div className="lol-match-card lol-group-match-card" onClick={onClick}>
+    <div className="lol-match-card-meta">
+      <span className="lol-match-card-queue">Rinha 5x5</span>
+      <span className="lol-match-card-time">{formatRelativeTime(match.ended_at)}</span>
+      <span className="lol-match-card-duration">{formatDuration(match.duration_seconds)}</span>
+    </div>
+
+    <div className="lol-group-match-teams">
+      <div className="lol-group-match-team lol-team lol-team--blue">
+        <h2>
+          Time Azul
+          {match.winning_team === 'BLUE' && <Crown size={13} className="lol-captain-icon" />}
+        </h2>
+        <div className="lol-match-card-roster-col">
+          {match.team_blue.map((p) => (
+            <MatchRosterEntry
+              key={p.id}
+              player={{ player_id: p.id, display_name: p.display_name, icon_url: p.profile_icon_url }}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="lol-group-match-team lol-team lol-team--red">
+        <h2>
+          Time Vermelho
+          {match.winning_team === 'RED' && <Crown size={13} className="lol-captain-icon" />}
+        </h2>
+        <div className="lol-match-card-roster-col">
+          {match.team_red.map((p) => (
+            <MatchRosterEntry
+              key={p.id}
+              player={{ player_id: p.id, display_name: p.display_name, icon_url: p.profile_icon_url }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 const GroupDetail = () => {
   const { id } = useParams();
@@ -374,34 +407,15 @@ const GroupDetail = () => {
           {matchHistory.length === 0 ? (
             <p className="lol-profile-section-empty">Nenhuma rinha registrada ainda.</p>
           ) : (
-            <table className="lol-match-table">
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Time Azul</th>
-                  <th>Time Vermelho</th>
-                  <th>Duração</th>
-                </tr>
-              </thead>
-              <tbody>
-                {matchHistory.map((match) => (
-                  <tr
-                    key={match.match_id}
-                    className="lol-clickable-row"
-                    onClick={() => setSelectedMatch(match)}
-                  >
-                    <td>{new Date(match.ended_at).toLocaleString('pt-BR')}</td>
-                    <td className={match.winning_team === 'BLUE' ? 'lol-win' : undefined}>
-                      {match.team_blue.map((p) => p.display_name).join(', ')}
-                    </td>
-                    <td className={match.winning_team === 'RED' ? 'lol-win' : undefined}>
-                      {match.team_red.map((p) => p.display_name).join(', ')}
-                    </td>
-                    <td>{formatDuration(match.duration_seconds)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="lol-match-card-list">
+              {matchHistory.map((match) => (
+                <GroupMatchCard
+                  key={match.id}
+                  match={match}
+                  onClick={() => setSelectedMatch(match)}
+                />
+              ))}
+            </div>
           )}
         </section>
       )}

@@ -1,36 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Crown } from 'lucide-react';
 import { playersService } from '../services/playersService';
 import { matchesService } from '../services/matchesService';
 import { LoadingScreen } from '../components/common/LoadingScreen';
 import { Modal } from '../components/common/Modal';
+import { MatchRosterEntry } from '../components/matches/MatchRosterEntry';
+import { formatDuration, formatRelativeTime } from '../utils/matchFormat';
 
 const ROLE_ORDER = ['Topo', 'Selva', 'Meio', 'Atirador', 'Suporte', 'Não identificada'];
-
-const formatDuration = (totalSeconds) => {
-  const minutes = Math.floor(totalSeconds / 60)
-    .toString()
-    .padStart(2, '0');
-  const seconds = Math.floor(totalSeconds % 60)
-    .toString()
-    .padStart(2, '0');
-  return `${minutes}:${seconds}`;
-};
-
-const formatRelativeTime = (isoDate) => {
-  const minutes = Math.floor((Date.now() - new Date(isoDate).getTime()) / 60000);
-  if (minutes < 1) return 'agora';
-  if (minutes < 60) return `${minutes} min atrás`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} h atrás`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days} dia${days > 1 ? 's' : ''} atrás`;
-  const months = Math.floor(days / 30);
-  if (months < 12) return `${months} mês${months > 1 ? 'es' : ''} atrás`;
-  const years = Math.floor(months / 12);
-  return `${years} ano${years > 1 ? 's' : ''} atrás`;
-};
 
 const ItemSlots = ({ items, className = '' }) => (
   <div className={`lol-match-items ${className}`.trim()}>
@@ -41,26 +19,6 @@ const ItemSlots = ({ items, className = '' }) => (
     ))}
   </div>
 );
-
-const MatchRosterEntry = ({ player }) => {
-  const content = (
-    <>
-      <img src={player.champion_icon_url} alt="" className="lol-match-card-roster-icon" />
-      <span>{player.display_name}</span>
-    </>
-  );
-  return player.player_id ? (
-    <Link
-      to={`/players/${player.player_id}`}
-      className="lol-match-card-roster-entry"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {content}
-    </Link>
-  ) : (
-    <span className="lol-match-card-roster-entry">{content}</span>
-  );
-};
 
 const MatchHistoryCard = ({ match, onClick }) => (
   <div
@@ -108,12 +66,12 @@ const MatchHistoryCard = ({ match, onClick }) => (
     <div className="lol-match-card-roster">
       <div className="lol-match-card-roster-col">
         {match.teammates.map((p, i) => (
-          <MatchRosterEntry key={i} player={p} />
+          <MatchRosterEntry key={i} player={{ ...p, icon_url: p.champion_icon_url }} />
         ))}
       </div>
       <div className="lol-match-card-roster-col">
         {match.opponents.map((p, i) => (
-          <MatchRosterEntry key={i} player={p} />
+          <MatchRosterEntry key={i} player={{ ...p, icon_url: p.champion_icon_url }} />
         ))}
       </div>
     </div>

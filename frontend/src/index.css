@@ -710,6 +710,32 @@ h2 {
   gap: 0.5rem;
 }
 
+.lol-group-match-card {
+  align-items: stretch;
+}
+
+.lol-group-match-teams {
+  display: flex;
+  flex: 1;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.lol-group-match-team {
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.82rem;
+}
+
+.lol-group-match-team h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
 .lol-match-card {
   display: flex;
   align-items: center;
@@ -750,6 +776,7 @@ h2 {
 .lol-match-card-meta {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 0.15rem;
   width: 100px;
   flex-shrink: 0;
