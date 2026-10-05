@@ -25,6 +25,19 @@ def _extract_items(participant: dict) -> list[int]:
     return [participant.get(f"item{slot}", 0) for slot in range(7)]
 
 
+def _cs(participant: dict) -> int:
+    return participant.get("totalMinionsKilled", 0) + participant.get("neutralMinionsKilled", 0)
+
+
+def _kill_participation(participant: dict, info: dict) -> int:
+    team_kills = sum(
+        p["kills"] for p in info["participants"] if p["teamId"] == participant["teamId"]
+    )
+    if team_kills == 0:
+        return 0
+    return round((participant["kills"] + participant["assists"]) * 100 / team_kills)
+
+
 class SyncMatchesUseCase(NullaryUseCase[SyncResult]):
     def __init__(
         self,
@@ -103,6 +116,11 @@ class SyncMatchesUseCase(NullaryUseCase[SyncResult]):
                 assists=p["assists"],
                 team_position=p.get("teamPosition", ""),
                 items=_extract_items(p),
+                champion_level=p.get("champLevel", 0),
+                summoner1_id=p.get("summoner1Id", 0),
+                summoner2_id=p.get("summoner2Id", 0),
+                cs=_cs(p),
+                kill_participation=_kill_participation(p, info),
             )
             for p in info["participants"]
             if p["puuid"] in player_id_by_puuid
@@ -124,6 +142,7 @@ class SyncMatchesUseCase(NullaryUseCase[SyncResult]):
                 "assists": p["assists"],
                 "team_position": p.get("teamPosition", ""),
                 "items": _extract_items(p),
+                "champion_level": p.get("champLevel", 0),
             }
             for p in info["participants"]
         ]

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { Crown } from 'lucide-react';
 import { playersService } from '../services/playersService';
 import { matchesService } from '../services/matchesService';
@@ -17,6 +17,101 @@ const formatDuration = (totalSeconds) => {
     .padStart(2, '0');
   return `${minutes}:${seconds}`;
 };
+
+const formatRelativeTime = (isoDate) => {
+  const minutes = Math.floor((Date.now() - new Date(isoDate).getTime()) / 60000);
+  if (minutes < 1) return 'agora';
+  if (minutes < 60) return `${minutes} min atrás`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} h atrás`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} dia${days > 1 ? 's' : ''} atrás`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} mês${months > 1 ? 'es' : ''} atrás`;
+  const years = Math.floor(months / 12);
+  return `${years} ano${years > 1 ? 's' : ''} atrás`;
+};
+
+const MatchRosterEntry = ({ player }) => {
+  const content = (
+    <>
+      <img src={player.champion_icon_url} alt="" className="lol-match-card-roster-icon" />
+      <span>{player.display_name}</span>
+    </>
+  );
+  return player.player_id ? (
+    <Link
+      to={`/players/${player.player_id}`}
+      className="lol-match-card-roster-entry"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {content}
+    </Link>
+  ) : (
+    <span className="lol-match-card-roster-entry">{content}</span>
+  );
+};
+
+const MatchHistoryCard = ({ match, onClick }) => (
+  <div
+    className={`lol-match-card ${match.win ? 'lol-match-card--win' : 'lol-match-card--loss'}`}
+    onClick={onClick}
+  >
+    <div className="lol-match-card-meta">
+      <span className="lol-match-card-queue">{match.queue_label}</span>
+      <span className="lol-match-card-time">{formatRelativeTime(match.game_creation)}</span>
+      <span className={`lol-match-card-result ${match.win ? 'lol-win' : 'lol-loss'}`}>
+        {match.win ? 'Vitória' : 'Derrota'}
+      </span>
+      <span className="lol-match-card-duration">
+        {formatDuration(match.game_duration_seconds)}
+      </span>
+    </div>
+
+    <div className="lol-match-card-champion">
+      <div className="lol-match-card-champion-frame">
+        <img src={match.champion_icon_url} alt="" className="lol-match-card-champion-icon" />
+        <span className="lol-match-card-champion-level">{match.champion_level}</span>
+      </div>
+      <div className="lol-match-card-spells">
+        {match.summoner_spell_icon_urls.map((url, i) => (
+          <img key={i} src={url} alt="" className="lol-match-card-spell-icon" />
+        ))}
+      </div>
+    </div>
+
+    <div className="lol-match-card-kda">
+      <p>
+        {match.kills} / <span className="lol-loss">{match.deaths}</span> / {match.assists}
+      </p>
+      <span>{match.kda_ratio}:1 KDA</span>
+    </div>
+
+    <div className="lol-match-card-stats">
+      <span>P/Kill {match.kill_participation}%</span>
+      <span>CS {match.cs}</span>
+    </div>
+
+    <div className="lol-match-items lol-match-card-items">
+      {match.item_icon_urls.map((url, i) => (
+        <img key={i} src={url} alt="" className="lol-match-item-icon" />
+      ))}
+    </div>
+
+    <div className="lol-match-card-roster">
+      <div className="lol-match-card-roster-col">
+        {match.teammates.map((p, i) => (
+          <MatchRosterEntry key={i} player={p} />
+        ))}
+      </div>
+      <div className="lol-match-card-roster-col">
+        {match.opponents.map((p, i) => (
+          <MatchRosterEntry key={i} player={p} />
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
 const MatchParticipantRow = ({ participant, highlighted }) => (
   <div className={`lol-player-card lol-match-participant-row${highlighted ? ' is-selected' : ''}`}>
@@ -236,45 +331,15 @@ const PlayerDetail = () => {
         {matches.length === 0 ? (
           <p className="lol-profile-section-empty">Nenhuma partida sincronizada ainda.</p>
         ) : (
-          <table className="lol-match-table">
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Campeão</th>
-                <th>Resultado</th>
-                <th>KDA</th>
-                <th>Itens</th>
-              </tr>
-            </thead>
-            <tbody>
-              {matches.map((match) => (
-                <tr
-                  key={match.match_id}
-                  className="lol-clickable-row"
-                  onClick={() => setSelectedMatchId(match.match_id)}
-                >
-                  <td>{new Date(match.game_creation).toLocaleString('pt-BR')}</td>
-                  <td className="lol-match-champion-cell">
-                    <img src={match.champion_icon_url} alt="" className="lol-match-champion-icon" />
-                    {match.champion_name}
-                  </td>
-                  <td className={match.win ? 'lol-win' : 'lol-loss'}>
-                    {match.win ? 'Vitória' : 'Derrota'}
-                  </td>
-                  <td>
-                    {match.kills}/{match.deaths}/{match.assists}
-                  </td>
-                  <td>
-                    <div className="lol-match-items">
-                      {match.item_icon_urls.map((url, i) => (
-                        <img key={i} src={url} alt="" className="lol-match-item-icon" />
-                      ))}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="lol-match-card-list">
+            {matches.map((match) => (
+              <MatchHistoryCard
+                key={match.match_id}
+                match={match}
+                onClick={() => setSelectedMatchId(match.match_id)}
+              />
+            ))}
+          </div>
         )}
       </section>
 

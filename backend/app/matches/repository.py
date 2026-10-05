@@ -19,6 +19,11 @@ class MatchParticipant:
     assists: int
     team_position: str
     items: list[int]
+    champion_level: int
+    summoner1_id: int
+    summoner2_id: int
+    cs: int
+    kill_participation: int
 
 
 @dataclass(frozen=True)
@@ -50,13 +55,21 @@ class MatchRecord:
 @dataclass(frozen=True)
 class PlayerMatchSummary:
     match_id: str
+    queue_id: int
     game_creation: datetime.datetime
+    game_duration_seconds: int
     champion_name: str
     win: bool
     kills: int
     deaths: int
     assists: int
     items: list[int]
+    champion_level: int
+    summoner1_id: int
+    summoner2_id: int
+    cs: int
+    kill_participation: int
+    participants_raw: list[dict]
 
 
 @dataclass(frozen=True)
@@ -125,10 +138,12 @@ class MatchRepository:
         participants_query = text("""
             INSERT INTO lol.match_participants
                 (match_id, player_id, champion_name, team_id, win, kills, deaths,
-                 assists, team_position, items)
+                 assists, team_position, items, champion_level, summoner1_id, summoner2_id,
+                 cs, kill_participation)
             VALUES
                 (:match_id, :player_id, :champion_name, :team_id, :win, :kills, :deaths,
-                 :assists, :team_position, :items)
+                 :assists, :team_position, :items, :champion_level, :summoner1_id, :summoner2_id,
+                 :cs, :kill_participation)
         """).bindparams(bindparam("items", type_=JSONB))
         for p in match.participants:
             await self._session.execute(
@@ -144,6 +159,11 @@ class MatchRepository:
                     "assists": p.assists,
                     "team_position": p.team_position,
                     "items": p.items,
+                    "champion_level": p.champion_level,
+                    "summoner1_id": p.summoner1_id,
+                    "summoner2_id": p.summoner2_id,
+                    "cs": p.cs,
+                    "kill_participation": p.kill_participation,
                 },
             )
         await self._session.commit()
@@ -152,8 +172,10 @@ class MatchRepository:
         self, player_id: uuid.UUID, limit: int = 20
     ) -> list[PlayerMatchSummary]:
         query = text("""
-            SELECT m.match_id, m.game_creation, mp.champion_name, mp.win,
-                   mp.kills, mp.deaths, mp.assists, mp.items
+            SELECT m.match_id, m.queue_id, m.game_creation, m.game_duration_seconds,
+                   mp.champion_name, mp.win, mp.kills, mp.deaths, mp.assists, mp.items,
+                   mp.champion_level, mp.summoner1_id, mp.summoner2_id, mp.cs,
+                   mp.kill_participation, m.participants_raw
             FROM lol.match_participants mp
             JOIN lol.matches m ON m.match_id = mp.match_id
             WHERE mp.player_id = :player_id

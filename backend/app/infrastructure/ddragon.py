@@ -2,6 +2,7 @@ import httpx
 
 _cached_version: str | None = None
 _cached_champions_by_id: dict[int, dict] | None = None
+_cached_summoner_spells_by_key: dict[int, str] | None = None
 
 
 async def get_latest_version() -> str:
@@ -29,6 +30,26 @@ async def get_champions_by_id() -> dict[int, dict]:
             for champ in response.json()["data"].values()
         }
     return _cached_champions_by_id
+
+
+async def get_summoner_spells_by_key() -> dict[int, str]:
+    """Maps match-v5's numeric summoner1Id/summoner2Id to the spell's Data Dragon
+    id (used in icon URLs, e.g. "SummonerFlash")."""
+    global _cached_summoner_spells_by_key
+    if _cached_summoner_spells_by_key is None:
+        version = await get_latest_version()
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.get(
+                f"https://ddragon.leagueoflegends.com/cdn/{version}/data/en_US/summoner.json"
+            )
+        _cached_summoner_spells_by_key = {
+            int(spell["key"]): spell["id"] for spell in response.json()["data"].values()
+        }
+    return _cached_summoner_spells_by_key
+
+
+def summoner_spell_icon_url(version: str, spell_id: str) -> str:
+    return f"https://ddragon.leagueoflegends.com/cdn/{version}/img/spell/{spell_id}.png"
 
 
 def profile_icon_url(version: str, profile_icon_id: int) -> str:

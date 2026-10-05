@@ -42,6 +42,15 @@ _ADD_ITEMS_COLUMN = text("""
     ALTER TABLE lol.match_participants ADD COLUMN IF NOT EXISTS items JSONB NOT NULL DEFAULT '[]'
 """)
 
+_ADD_MATCH_CARD_COLUMNS = text("""
+    ALTER TABLE lol.match_participants
+        ADD COLUMN IF NOT EXISTS champion_level INT NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS summoner1_id INT NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS summoner2_id INT NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS cs INT NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS kill_participation INT NOT NULL DEFAULT 0
+""")
+
 # Full 10-player roster snapshot (champion, items, kda for every participant, not
 # just the tracked ones) so the match-detail view can show who was on the other
 # team without needing them to be a tracked player themselves.
@@ -65,5 +74,6 @@ async def ensure_matches_tables(engine: AsyncEngine) -> None:
         await conn.execute(_CREATE_PARTICIPANTS_PLAYER_INDEX)
         await conn.execute(_ADD_TEAM_POSITION_COLUMN)
         await conn.execute(_ADD_ITEMS_COLUMN)
+        await conn.execute(_ADD_MATCH_CARD_COLUMNS)
         await conn.execute(_ADD_PARTICIPANTS_RAW_COLUMN)
         await conn.execute(_CREATE_CHECKED_MATCHES_TABLE)
