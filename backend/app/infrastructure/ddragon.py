@@ -39,6 +39,10 @@ def champion_icon_url(version: str, champion_name: str) -> str:
     return f"https://ddragon.leagueoflegends.com/cdn/{version}/img/champion/{champion_name}.png"
 
 
+def item_icon_url(version: str, item_id: int) -> str:
+    return f"https://ddragon.leagueoflegends.com/cdn/{version}/img/item/{item_id}.png"
+
+
 def rank_emblem_url(tier: str) -> str:
     # Not Data Dragon - Riot doesn't publish rank emblems there. Community Dragon
     # mirrors the game's own assets and is what every LoL stats site uses for this.

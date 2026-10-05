@@ -3,6 +3,7 @@ import uuid
 from dataclasses import dataclass
 
 from sqlalchemy import bindparam, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +18,7 @@ class MatchParticipant:
     deaths: int
     assists: int
     team_position: str
+    items: list[int]
 
 
 @dataclass(frozen=True)
@@ -28,6 +30,21 @@ class Match:
     game_creation: datetime.datetime
     game_duration_seconds: int
     participants: list[MatchParticipant]
+    # Every one of the 10 players in the game, win/loss/champion/items/kda,
+    # including the ones who aren't tracked players - powers the match-detail
+    # view's "who did they play against" roster.
+    participants_raw: list[dict]
+
+
+@dataclass(frozen=True)
+class MatchRecord:
+    match_id: str
+    queue_id: int
+    game_mode: str
+    map_id: int
+    game_creation: datetime.datetime
+    game_duration_seconds: int
+    participants_raw: list[dict]
 
 
 @dataclass(frozen=True)
@@ -39,6 +56,7 @@ class PlayerMatchSummary:
     kills: int
     deaths: int
     assists: int
+    items: list[int]
 
 
 @dataclass(frozen=True)
@@ -88,10 +106,12 @@ class MatchRepository:
         await self._session.execute(
             text("""
                 INSERT INTO lol.matches
-                    (match_id, queue_id, game_mode, map_id, game_creation, game_duration_seconds)
+                    (match_id, queue_id, game_mode, map_id, game_creation, game_duration_seconds,
+                     participants_raw)
                 VALUES
-                    (:match_id, :queue_id, :game_mode, :map_id, :game_creation, :game_duration_seconds)
-            """),
+                    (:match_id, :queue_id, :game_mode, :map_id, :game_creation, :game_duration_seconds,
+                     :participants_raw)
+            """).bindparams(bindparam("participants_raw", type_=JSONB)),
             {
                 "match_id": match.match_id,
                 "queue_id": match.queue_id,
@@ -99,18 +119,20 @@ class MatchRepository:
                 "map_id": match.map_id,
                 "game_creation": match.game_creation,
                 "game_duration_seconds": match.game_duration_seconds,
+                "participants_raw": match.participants_raw,
             },
         )
+        participants_query = text("""
+            INSERT INTO lol.match_participants
+                (match_id, player_id, champion_name, team_id, win, kills, deaths,
+                 assists, team_position, items)
+            VALUES
+                (:match_id, :player_id, :champion_name, :team_id, :win, :kills, :deaths,
+                 :assists, :team_position, :items)
+        """).bindparams(bindparam("items", type_=JSONB))
         for p in match.participants:
             await self._session.execute(
-                text("""
-                    INSERT INTO lol.match_participants
-                        (match_id, player_id, champion_name, team_id, win, kills, deaths,
-                         assists, team_position)
-                    VALUES
-                        (:match_id, :player_id, :champion_name, :team_id, :win, :kills, :deaths,
-                         :assists, :team_position)
-                """),
+                participants_query,
                 {
                     "match_id": match.match_id,
                     "player_id": p.player_id,
@@ -121,6 +143,7 @@ class MatchRepository:
                     "deaths": p.deaths,
                     "assists": p.assists,
                     "team_position": p.team_position,
+                    "items": p.items,
                 },
             )
         await self._session.commit()
@@ -130,7 +153,7 @@ class MatchRepository:
     ) -> list[PlayerMatchSummary]:
         query = text("""
             SELECT m.match_id, m.game_creation, mp.champion_name, mp.win,
-                   mp.kills, mp.deaths, mp.assists
+                   mp.kills, mp.deaths, mp.assists, mp.items
             FROM lol.match_participants mp
             JOIN lol.matches m ON m.match_id = mp.match_id
             WHERE mp.player_id = :player_id
@@ -139,6 +162,19 @@ class MatchRepository:
         """).bindparams(bindparam("player_id", type_=PG_UUID(as_uuid=True)))
         result = await self._session.execute(query, {"player_id": player_id, "limit": limit})
         return [PlayerMatchSummary(**row._mapping) for row in result]
+
+    async def get_by_id(self, match_id: str) -> MatchRecord | None:
+        result = await self._session.execute(
+            text("""
+                SELECT match_id, queue_id, game_mode, map_id, game_creation,
+                       game_duration_seconds, participants_raw
+                FROM lol.matches
+                WHERE match_id = :match_id
+            """),
+            {"match_id": match_id},
+        )
+        row = result.first()
+        return MatchRecord(**row._mapping) if row else None
 
     async def get_overall_stats(self, player_id: uuid.UUID) -> OverallStats:
         query = text("""

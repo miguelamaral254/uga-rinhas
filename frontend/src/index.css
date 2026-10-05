@@ -634,6 +634,62 @@ h2 {
   text-decoration: underline;
 }
 
+.lol-match-champion-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lol-match-champion-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.lol-match-items {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.lol-match-item-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid var(--lol-border);
+}
+
+.lol-match-participant-row {
+  gap: 0.5rem 0.75rem;
+  flex-wrap: wrap;
+}
+
+.lol-match-participant-row .lol-player-info {
+  min-width: 0;
+}
+
+.lol-match-participant-row .lol-match-items {
+  flex-basis: 100%;
+  padding-left: calc(36px + 0.75rem);
+}
+
+.lol-match-participant-row.is-selected {
+  border-color: var(--lol-border-gold);
+  box-shadow: 0 0 0 1px var(--lol-border-gold) inset;
+}
+
+.lol-match-participant-champion {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.lol-match-participant-kda {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .lol-win {
   color: var(--lol-win);
 }

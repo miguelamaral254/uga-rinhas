@@ -21,6 +21,10 @@ class SyncResult(BaseModel):
     matches_synced: int
 
 
+def _extract_items(participant: dict) -> list[int]:
+    return [participant.get(f"item{slot}", 0) for slot in range(7)]
+
+
 class SyncMatchesUseCase(NullaryUseCase[SyncResult]):
     def __init__(
         self,
@@ -98,12 +102,31 @@ class SyncMatchesUseCase(NullaryUseCase[SyncResult]):
                 deaths=p["deaths"],
                 assists=p["assists"],
                 team_position=p.get("teamPosition", ""),
+                items=_extract_items(p),
             )
             for p in info["participants"]
             if p["puuid"] in player_id_by_puuid
         ]
         if not participants:
             return None
+
+        participants_raw = [
+            {
+                "player_id": str(player_id_by_puuid[p["puuid"]])
+                if p["puuid"] in player_id_by_puuid
+                else None,
+                "display_name": p.get("riotIdGameName") or p.get("summonerName") or "Desconhecido",
+                "champion_name": p["championName"],
+                "team_id": p["teamId"],
+                "win": p["win"],
+                "kills": p["kills"],
+                "deaths": p["deaths"],
+                "assists": p["assists"],
+                "team_position": p.get("teamPosition", ""),
+                "items": _extract_items(p),
+            }
+            for p in info["participants"]
+        ]
 
         return Match(
             match_id=match_id,
@@ -115,4 +138,5 @@ class SyncMatchesUseCase(NullaryUseCase[SyncResult]):
             ),
             game_duration_seconds=info["gameDuration"],
             participants=participants,
+            participants_raw=participants_raw,
         )

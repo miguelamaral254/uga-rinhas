@@ -1,16 +1,48 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Crown } from 'lucide-react';
 import { playersService } from '../services/playersService';
 import { matchesService } from '../services/matchesService';
 import { LoadingScreen } from '../components/common/LoadingScreen';
+import { Modal } from '../components/common/Modal';
 
 const ROLE_ORDER = ['Topo', 'Selva', 'Meio', 'Atirador', 'Suporte', 'Não identificada'];
+
+const formatDuration = (totalSeconds) => {
+  const minutes = Math.floor(totalSeconds / 60)
+    .toString()
+    .padStart(2, '0');
+  const seconds = Math.floor(totalSeconds % 60)
+    .toString()
+    .padStart(2, '0');
+  return `${minutes}:${seconds}`;
+};
+
+const MatchParticipantRow = ({ participant, highlighted }) => (
+  <div className={`lol-player-card lol-match-participant-row${highlighted ? ' is-selected' : ''}`}>
+    <img src={participant.champion_icon_url} alt="" className="lol-match-participant-champion" />
+    <div className="lol-player-info">
+      <p className="lol-player-name">{participant.display_name}</p>
+      <p className="lol-player-riot-id">{participant.champion_name}</p>
+    </div>
+    <span className="lol-match-participant-kda">
+      {participant.kills}/{participant.deaths}/{participant.assists}
+    </span>
+    <div className="lol-match-items">
+      {participant.item_icon_urls.map((url, i) => (
+        <img key={i} src={url} alt="" className="lol-match-item-icon" />
+      ))}
+    </div>
+  </div>
+);
 
 const PlayerDetail = () => {
   const { id } = useParams();
   const [profile, setProfile] = useState(null);
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMatchId, setSelectedMatchId] = useState(null);
+  const [matchDetail, setMatchDetail] = useState(null);
 
   useEffect(() => {
     Promise.all([playersService.getProfile(id), matchesService.listForPlayer(id)])
@@ -21,6 +53,17 @@ const PlayerDetail = () => {
       .catch((error) => console.error('Error loading player:', error))
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (!selectedMatchId) {
+      setMatchDetail(null);
+      return;
+    }
+    matchesService
+      .getDetail(selectedMatchId)
+      .then(setMatchDetail)
+      .catch((error) => console.error('Error loading match detail:', error));
+  }, [selectedMatchId]);
 
   if (loading) return <LoadingScreen label="Carregando jogador" />;
   if (!profile) return <div className="lol-empty">Jogador não encontrado.</div>;
@@ -200,18 +243,33 @@ const PlayerDetail = () => {
                 <th>Campeão</th>
                 <th>Resultado</th>
                 <th>KDA</th>
+                <th>Itens</th>
               </tr>
             </thead>
             <tbody>
               {matches.map((match) => (
-                <tr key={match.match_id}>
+                <tr
+                  key={match.match_id}
+                  className="lol-clickable-row"
+                  onClick={() => setSelectedMatchId(match.match_id)}
+                >
                   <td>{new Date(match.game_creation).toLocaleString('pt-BR')}</td>
-                  <td>{match.champion_name}</td>
+                  <td className="lol-match-champion-cell">
+                    <img src={match.champion_icon_url} alt="" className="lol-match-champion-icon" />
+                    {match.champion_name}
+                  </td>
                   <td className={match.win ? 'lol-win' : 'lol-loss'}>
                     {match.win ? 'Vitória' : 'Derrota'}
                   </td>
                   <td>
                     {match.kills}/{match.deaths}/{match.assists}
+                  </td>
+                  <td>
+                    <div className="lol-match-items">
+                      {match.item_icon_urls.map((url, i) => (
+                        <img key={i} src={url} alt="" className="lol-match-item-icon" />
+                      ))}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -219,6 +277,60 @@ const PlayerDetail = () => {
           </table>
         )}
       </section>
+
+      <Modal
+        isOpen={!!selectedMatchId}
+        onClose={() => setSelectedMatchId(null)}
+        title="Detalhes da partida"
+        size="lg"
+      >
+        {matchDetail && (
+          <>
+            <div className="lol-match-status">
+              <span
+                className={`lol-match-timer lol-match-timer--finished ${
+                  matchDetail.winning_team_id === 100 ? 'lol-win' : 'lol-loss'
+                }`}
+              >
+                Vitória do Time {matchDetail.winning_team_id === 100 ? 'Azul' : 'Vermelho'} ·{' '}
+                {formatDuration(matchDetail.game_duration_seconds)}
+              </span>
+            </div>
+            <p className="lol-lobby-subtitle">
+              {new Date(matchDetail.game_creation).toLocaleString('pt-BR')}
+            </p>
+
+            <div className="lol-teams-grid">
+              <div className="lol-team lol-team--blue">
+                <h2>
+                  Time Azul
+                  {matchDetail.winning_team_id === 100 && (
+                    <Crown size={14} className="lol-captain-icon" />
+                  )}
+                </h2>
+                <div className="lol-player-list">
+                  {matchDetail.team_blue.map((p, i) => (
+                    <MatchParticipantRow key={i} participant={p} highlighted={p.player_id === id} />
+                  ))}
+                </div>
+              </div>
+              <div className="lol-team lol-team--red">
+                <h2>
+                  Time Vermelho
+                  {matchDetail.winning_team_id === 200 && (
+                    <Crown size={14} className="lol-captain-icon" />
+                  )}
+                </h2>
+                <div className="lol-player-list">
+                  {matchDetail.team_red.map((p, i) => (
+                    <MatchParticipantRow key={i} participant={p} highlighted={p.player_id === id} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </Modal>
     </div>
   );
 };

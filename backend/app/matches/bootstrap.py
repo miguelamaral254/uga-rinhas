@@ -38,6 +38,17 @@ _ADD_TEAM_POSITION_COLUMN = text("""
     ALTER TABLE lol.match_participants ADD COLUMN IF NOT EXISTS team_position TEXT NOT NULL DEFAULT ''
 """)
 
+_ADD_ITEMS_COLUMN = text("""
+    ALTER TABLE lol.match_participants ADD COLUMN IF NOT EXISTS items JSONB NOT NULL DEFAULT '[]'
+""")
+
+# Full 10-player roster snapshot (champion, items, kda for every participant, not
+# just the tracked ones) so the match-detail view can show who was on the other
+# team without needing them to be a tracked player themselves.
+_ADD_PARTICIPANTS_RAW_COLUMN = text("""
+    ALTER TABLE lol.matches ADD COLUMN IF NOT EXISTS participants_raw JSONB NOT NULL DEFAULT '[]'
+""")
+
 _CREATE_CHECKED_MATCHES_TABLE = text("""
     CREATE TABLE IF NOT EXISTS lol.checked_matches (
         match_id TEXT PRIMARY KEY,
@@ -53,4 +64,6 @@ async def ensure_matches_tables(engine: AsyncEngine) -> None:
         await conn.execute(_CREATE_PARTICIPANTS_TABLE)
         await conn.execute(_CREATE_PARTICIPANTS_PLAYER_INDEX)
         await conn.execute(_ADD_TEAM_POSITION_COLUMN)
+        await conn.execute(_ADD_ITEMS_COLUMN)
+        await conn.execute(_ADD_PARTICIPANTS_RAW_COLUMN)
         await conn.execute(_CREATE_CHECKED_MATCHES_TABLE)
