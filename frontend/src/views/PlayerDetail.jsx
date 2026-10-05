@@ -305,7 +305,7 @@ const PlayerDetail = () => {
                       style={{ width: `${champ.win_rate}%` }}
                     />
                   </div>
-                  <span className="lol-champion-games">{champ.games}j</span>
+                  <span className="lol-champion-games">{champ.games}</span>
                 </li>
               ))}
             </ul>
@@ -327,7 +327,7 @@ const PlayerDetail = () => {
                       style={{ width: `${(role.games / maxRoleGames) * 100}%` }}
                     />
                   </div>
-                  <span className="lol-role-games">{role.games}j</span>
+                  <span className="lol-role-games">{role.games}</span>
                 </li>
               ))}
             </ul>
