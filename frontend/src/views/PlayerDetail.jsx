@@ -68,14 +68,21 @@ const MatchHistoryCard = ({ match, onClick }) => (
       </span>
     </div>
 
-    <div className="lol-match-card-champion">
-      <div className="lol-match-card-champion-frame">
-        <img src={match.champion_icon_url} alt="" className="lol-match-card-champion-icon" />
-        <span className="lol-match-card-champion-level">{match.champion_level}</span>
+    <div className="lol-match-card-champion-col">
+      <div className="lol-match-card-champion">
+        <div className="lol-match-card-champion-frame">
+          <img src={match.champion_icon_url} alt="" className="lol-match-card-champion-icon" />
+          <span className="lol-match-card-champion-level">{match.champion_level}</span>
+        </div>
+        <div className="lol-match-card-spells">
+          {match.summoner_spell_icon_urls.map((url, i) => (
+            <img key={i} src={url} alt="" className="lol-match-card-spell-icon" />
+          ))}
+        </div>
       </div>
-      <div className="lol-match-card-spells">
-        {match.summoner_spell_icon_urls.map((url, i) => (
-          <img key={i} src={url} alt="" className="lol-match-card-spell-icon" />
+      <div className="lol-match-items lol-match-card-items">
+        {match.item_icon_urls.map((url, i) => (
+          <img key={i} src={url} alt="" className="lol-match-item-icon" />
         ))}
       </div>
     </div>
@@ -90,12 +97,6 @@ const MatchHistoryCard = ({ match, onClick }) => (
     <div className="lol-match-card-stats">
       <span>P/Kill {match.kill_participation}%</span>
       <span>CS {match.cs}</span>
-    </div>
-
-    <div className="lol-match-items lol-match-card-items">
-      {match.item_icon_urls.map((url, i) => (
-        <img key={i} src={url} alt="" className="lol-match-item-icon" />
-      ))}
     </div>
 
     <div className="lol-match-card-roster">

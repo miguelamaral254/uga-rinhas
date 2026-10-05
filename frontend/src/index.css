@@ -699,14 +699,14 @@ h2 {
 .lol-match-card {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 1rem;
   padding: 0.75rem 1rem;
   border-radius: 8px;
   border: 1px solid var(--lol-border);
-  background: linear-gradient(145deg, var(--lol-surface-2), var(--lol-surface));
   cursor: pointer;
   transition: border-color 0.15s ease;
+  overflow: hidden;
 }
 
 .lol-match-card:hover {
@@ -715,10 +715,22 @@ h2 {
 
 .lol-match-card--win {
   border-left: 3px solid var(--lol-win);
+  background: linear-gradient(
+    145deg,
+    rgba(63, 185, 80, 0.16),
+    rgba(63, 185, 80, 0.05) 60%,
+    var(--lol-surface)
+  );
 }
 
 .lol-match-card--loss {
   border-left: 3px solid var(--lol-loss);
+  background: linear-gradient(
+    145deg,
+    rgba(248, 81, 73, 0.16),
+    rgba(248, 81, 73, 0.05) 60%,
+    var(--lol-surface)
+  );
 }
 
 .lol-match-card-meta {
@@ -818,9 +830,16 @@ h2 {
   min-width: 80px;
 }
 
+.lol-match-card-champion-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  width: 130px;
+}
+
 .lol-match-card-items {
   flex-shrink: 0;
-  max-width: 160px;
 }
 
 .lol-match-card-roster {
@@ -828,8 +847,8 @@ h2 {
   grid-template-columns: 1fr 1fr;
   gap: 0 0.75rem;
   font-size: 0.75rem;
-  flex: 1;
-  min-width: 220px;
+  flex: 1 1 180px;
+  min-width: 0;
 }
 
 .lol-match-card-roster-col {
