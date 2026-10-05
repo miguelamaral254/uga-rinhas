@@ -116,18 +116,26 @@ const MatchHistoryCard = ({ match, onClick }) => (
 
 const MatchParticipantRow = ({ participant, highlighted }) => (
   <div className={`lol-player-card lol-match-participant-row${highlighted ? ' is-selected' : ''}`}>
-    <img src={participant.champion_icon_url} alt="" className="lol-match-participant-champion" />
+    <div className="lol-match-card-champion-frame">
+      <img src={participant.champion_icon_url} alt="" className="lol-match-card-champion-icon" />
+      <span className="lol-match-card-champion-level">{participant.champion_level}</span>
+    </div>
+    <div className="lol-match-card-spells">
+      {participant.summoner_spell_icon_urls.map((url, i) => (
+        <img key={i} src={url} alt="" className="lol-match-card-spell-icon" />
+      ))}
+    </div>
     <div className="lol-player-info">
       <p className="lol-player-name">{participant.display_name}</p>
-      <p className="lol-player-riot-id">{participant.champion_name}</p>
-    </div>
-    <span className="lol-match-participant-kda">
-      {participant.kills}/{participant.deaths}/{participant.assists}
-    </span>
-    <div className="lol-match-items">
-      {participant.item_icon_urls.map((url, i) => (
-        <img key={i} src={url} alt="" className="lol-match-item-icon" />
-      ))}
+      <p className="lol-match-participant-kda">
+        {participant.kills} / <span className="lol-loss">{participant.deaths}</span> /{' '}
+        {participant.assists}
+      </p>
+      <div className="lol-match-items">
+        {participant.item_icon_urls.map((url, i) => (
+          <img key={i} src={url} alt="" className="lol-match-item-icon" />
+        ))}
+      </div>
     </div>
   </div>
 );

@@ -14,6 +14,8 @@ class MatchParticipantDetail(BaseModel):
     display_name: str
     champion_name: str
     champion_icon_url: str
+    champion_level: int
+    summoner_spell_icon_urls: list[str]
     win: bool
     kills: int
     deaths: int
@@ -42,12 +44,19 @@ class GetMatchDetailUseCase(UseCase[str, MatchDetail]):
             raise ResourceNotFoundError("match.notFound")
 
         version = await ddragon.get_latest_version()
+        spells_by_key = await ddragon.get_summoner_spells_by_key()
         participants = [
             MatchParticipantDetail(
                 player_id=uuid.UUID(p["player_id"]) if p["player_id"] else None,
                 display_name=p["display_name"],
                 champion_name=p["champion_name"],
                 champion_icon_url=ddragon.champion_icon_url(version, p["champion_name"]),
+                champion_level=p.get("champion_level", 0),
+                summoner_spell_icon_urls=[
+                    ddragon.summoner_spell_icon_url(version, spells_by_key[spell_id])
+                    for spell_id in (p.get("summoner1_id", 0), p.get("summoner2_id", 0))
+                    if spell_id in spells_by_key
+                ],
                 win=p["win"],
                 kills=p["kills"],
                 deaths=p["deaths"],

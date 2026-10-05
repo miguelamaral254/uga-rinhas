@@ -143,6 +143,8 @@ class SyncMatchesUseCase(NullaryUseCase[SyncResult]):
                 "team_position": p.get("teamPosition", ""),
                 "items": _extract_items(p),
                 "champion_level": p.get("champLevel", 0),
+                "summoner1_id": p.get("summoner1Id", 0),
+                "summoner2_id": p.get("summoner2Id", 0),
             }
             for p in info["participants"]
         ]
