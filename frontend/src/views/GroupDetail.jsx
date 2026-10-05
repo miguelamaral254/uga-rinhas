@@ -1,6 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Shuffle, ArrowRight, ArrowLeft, Play, Pencil, LogOut, Crown, UserMinus } from 'lucide-react';
+import {
+  Shuffle,
+  ArrowRight,
+  ArrowLeft,
+  Play,
+  Pencil,
+  LogOut,
+  Crown,
+  UserMinus,
+  Image as ImageIcon,
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { groupsService } from '../services/groupsService';
 import { groupMatchesService } from '../services/groupMatchesService';
@@ -15,6 +25,7 @@ import { GroupLeaderCard } from '../components/groups/GroupLeaderCard';
 import { TeamBuilder } from '../components/groups/TeamBuilder';
 
 const REQUIRED_PLAYERS = 10;
+const MAX_IMAGE_BYTES = 1024 * 1024;
 
 const formatDuration = (totalSeconds) => {
   const minutes = Math.floor(totalSeconds / 60)
@@ -60,8 +71,11 @@ const GroupDetail = () => {
   const [matchHistory, setMatchHistory] = useState([]);
   const [historyLoaded, setHistoryLoaded] = useState(false);
 
-  const [editingName, setEditingName] = useState(false);
+  const [editingGroup, setEditingGroup] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [groupSaving, setGroupSaving] = useState(false);
   const [managingMember, setManagingMember] = useState(null);
 
   const isOwner = group && account && group.owner_id === account.id;
@@ -169,13 +183,39 @@ const GroupDetail = () => {
     }
   };
 
-  const handleSaveName = async (e) => {
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > MAX_IMAGE_BYTES) {
+      setError('A imagem precisa ter no máximo 1MB.');
+      e.target.value = '';
+      return;
+    }
+    setError(null);
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleSaveGroup = async (e) => {
     e.preventDefault();
+    setGroupSaving(true);
+    setError(null);
     try {
-      setGroup(await groupsService.updateName(id, nameDraft));
-      setEditingName(false);
+      let updated = group;
+      if (nameDraft !== group.name) {
+        updated = await groupsService.updateName(id, nameDraft);
+      }
+      if (imageFile) {
+        updated = await groupsService.uploadImage(id, imageFile);
+      }
+      setGroup(updated);
+      setEditingGroup(false);
+      setImageFile(null);
+      setImagePreview(null);
     } catch (err) {
-      setError(err.response?.data?.message || 'Não foi possível renomear o grupo.');
+      setError(err.response?.data?.message || 'Não foi possível salvar o grupo.');
+    } finally {
+      setGroupSaving(false);
     }
   };
 
@@ -224,18 +264,28 @@ const GroupDetail = () => {
   return (
     <div className="lol-lobby">
       <div className="lol-group-title-row">
+        <div className="lol-group-image-frame">
+          {group.image_url ? (
+            <img src={group.image_url} alt="" className="lol-group-image" />
+          ) : (
+            <div className="lol-group-image lol-group-image--placeholder">
+              <ImageIcon size={18} />
+            </div>
+          )}
+        </div>
         <h1>{group.name}</h1>
         {isOwner && (
           <button
             type="button"
-            className="lol-nav-icon-btn"
+            className="lol-edit-group-button"
             onClick={() => {
               setNameDraft(group.name);
-              setEditingName(true);
+              setImageFile(null);
+              setImagePreview(null);
+              setEditingGroup(true);
             }}
-            aria-label="Editar nome do grupo"
           >
-            <Pencil size={16} />
+            <Pencil size={14} /> Editar grupo
           </button>
         )}
       </div>
@@ -433,15 +483,41 @@ const GroupDetail = () => {
 
       {error && <p className="lol-form-error">{error}</p>}
 
-      <Modal isOpen={editingName} onClose={() => setEditingName(false)} title="Editar nome do grupo">
-        <form onSubmit={handleSaveName} className="lol-auth-form">
+      <Modal isOpen={editingGroup} onClose={() => setEditingGroup(false)} title="Editar grupo">
+        <form onSubmit={handleSaveGroup} className="lol-auth-form">
+          <div className="lol-group-image-picker">
+            {imagePreview || group.image_url ? (
+              <img
+                src={imagePreview || group.image_url}
+                alt=""
+                className="lol-group-image lol-group-image--lg"
+              />
+            ) : (
+              <div className="lol-group-image lol-group-image--lg lol-group-image--placeholder">
+                <ImageIcon size={24} />
+              </div>
+            )}
+            <div>
+              <label className="lol-group-image-upload-label">
+                Trocar imagem
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  onChange={handleImageSelect}
+                />
+              </label>
+              <p className="lol-auth-hint">Até 1MB.</p>
+            </div>
+          </div>
           <input
             type="text"
             value={nameDraft}
             onChange={(e) => setNameDraft(e.target.value)}
             required
           />
-          <button type="submit">Salvar</button>
+          <button type="submit" disabled={groupSaving}>
+            {groupSaving ? 'Salvando...' : 'Salvar'}
+          </button>
         </form>
       </Modal>
 

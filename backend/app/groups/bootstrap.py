@@ -38,6 +38,12 @@ _BACKFILL_OWNER_ID = text("""
     UPDATE lol.groups SET owner_id = created_by WHERE owner_id IS NULL
 """)
 
+# Relative path under /uploads (e.g. "/uploads/groups/<id>.jpg") - absolute URLs
+# are built at response time from settings.public_base_url.
+_ADD_IMAGE_PATH_COLUMN = text("""
+    ALTER TABLE lol.groups ADD COLUMN IF NOT EXISTS image_path TEXT
+""")
+
 
 async def ensure_groups_tables(engine: AsyncEngine) -> None:
     async with engine.begin() as conn:
@@ -47,3 +53,4 @@ async def ensure_groups_tables(engine: AsyncEngine) -> None:
         await conn.execute(_ADD_STATUS_COLUMN)
         await conn.execute(_ADD_OWNER_ID_COLUMN)
         await conn.execute(_BACKFILL_OWNER_ID)
+        await conn.execute(_ADD_IMAGE_PATH_COLUMN)

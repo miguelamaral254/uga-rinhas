@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     app_name: str = "LoL Tracker"
     environment: str = "development"
     port: int = 8000
+    public_base_url: str = "http://localhost:8000"
 
     database_url: str
     database_pool_size: int = 5

@@ -13,6 +13,7 @@ class Group:
     join_code: str
     created_by: uuid.UUID
     owner_id: uuid.UUID
+    image_path: str | None
 
 
 @dataclass(frozen=True)
@@ -25,7 +26,7 @@ class GroupMember:
     summoner_level: int | None
 
 
-_GROUP_FIELDS = "id, name, join_code, created_by, owner_id"
+_GROUP_FIELDS = "id, name, join_code, created_by, owner_id, image_path"
 
 
 class GroupRepository:
@@ -53,6 +54,13 @@ class GroupRepository:
             UPDATE lol.groups SET name = :name WHERE id = :id
         """).bindparams(bindparam("id", type_=PG_UUID(as_uuid=True)))
         await self._session.execute(query, {"id": group_id, "name": name})
+        await self._session.commit()
+
+    async def update_image(self, group_id: uuid.UUID, image_path: str) -> None:
+        query = text("""
+            UPDATE lol.groups SET image_path = :image_path WHERE id = :id
+        """).bindparams(bindparam("id", type_=PG_UUID(as_uuid=True)))
+        await self._session.execute(query, {"id": group_id, "image_path": image_path})
         await self._session.commit()
 
     async def update_owner(self, group_id: uuid.UUID, new_owner_id: uuid.UUID) -> None:
@@ -148,7 +156,7 @@ class GroupRepository:
         self, excluding_player_id: uuid.UUID
     ) -> list[tuple[Group, GroupMember, int]]:
         query = text("""
-            SELECT g.id, g.name, g.join_code, g.created_by, g.owner_id,
+            SELECT g.id, g.name, g.join_code, g.created_by, g.owner_id, g.image_path,
                    p.id AS owner_id_dup, p.display_name AS owner_display_name,
                    p.riot_game_name AS owner_riot_game_name,
                    p.riot_tag_line AS owner_riot_tag_line,
@@ -161,7 +169,7 @@ class GroupRepository:
             WHERE g.id NOT IN (
                 SELECT group_id FROM lol.group_members WHERE player_id = :player_id
             )
-            GROUP BY g.id, g.name, g.join_code, g.created_by, g.owner_id,
+            GROUP BY g.id, g.name, g.join_code, g.created_by, g.owner_id, g.image_path,
                      p.id, p.display_name, p.riot_game_name, p.riot_tag_line,
                      p.profile_icon_id, p.summoner_level
             ORDER BY member_count DESC, g.name ASC
@@ -173,7 +181,7 @@ class GroupRepository:
         self, join_code: str
     ) -> tuple[Group, GroupMember, int] | None:
         query = text("""
-            SELECT g.id, g.name, g.join_code, g.created_by, g.owner_id,
+            SELECT g.id, g.name, g.join_code, g.created_by, g.owner_id, g.image_path,
                    p.id AS owner_id_dup, p.display_name AS owner_display_name,
                    p.riot_game_name AS owner_riot_game_name,
                    p.riot_tag_line AS owner_riot_tag_line,
@@ -184,7 +192,7 @@ class GroupRepository:
             JOIN lol.players p ON p.id = g.owner_id
             LEFT JOIN lol.group_members gm ON gm.group_id = g.id
             WHERE g.join_code = :code
-            GROUP BY g.id, g.name, g.join_code, g.created_by, g.owner_id,
+            GROUP BY g.id, g.name, g.join_code, g.created_by, g.owner_id, g.image_path,
                      p.id, p.display_name, p.riot_game_name, p.riot_tag_line,
                      p.profile_icon_id, p.summoner_level
         """)
@@ -212,6 +220,7 @@ def _row_to_discoverable(row) -> tuple[Group, GroupMember, int]:
         join_code=mapping["join_code"],
         created_by=mapping["created_by"],
         owner_id=mapping["owner_id"],
+        image_path=mapping["image_path"],
     )
     owner = GroupMember(
         id=mapping["owner_id_dup"],

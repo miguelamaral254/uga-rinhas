@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import CurrentPlayer
@@ -37,6 +37,7 @@ from app.groups.transfer_ownership_usecase import (
     TransferOwnershipUseCase,
 )
 from app.groups.update_group_usecase import UpdateGroupRequest, UpdateGroupUseCase
+from app.groups.upload_group_image_usecase import UploadGroupImageUseCase
 from app.infrastructure.database import get_session
 from app.infrastructure.exceptions import ForbiddenError, ResourceNotFoundError
 from app.infrastructure.riot_client import RiotClient
@@ -103,6 +104,17 @@ async def update_group(
 ) -> GroupResponse:
     use_case = UpdateGroupUseCase(GroupRepository(session), current_player)
     return await use_case.execute(group_id, request)
+
+
+@router.post("/{group_id}/image", response_model=GroupResponse)
+async def upload_image(
+    group_id: uuid.UUID,
+    session: Session,
+    current_player: CurrentPlayer,
+    file: UploadFile = File(...),
+) -> GroupResponse:
+    use_case = UploadGroupImageUseCase(GroupRepository(session), current_player)
+    return await use_case.execute(group_id, file)
 
 
 @router.post("/{group_id}/transfer-owner", response_model=GroupResponse)

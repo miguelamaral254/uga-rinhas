@@ -13,6 +13,15 @@ export const groupsService = {
   matchHistory: async (groupId) => (await api.get(`/api/groups/${groupId}/matches`)).data,
   updateName: async (groupId, name) =>
     (await api.patch(`/api/groups/${groupId}`, { name })).data,
+  uploadImage: async (groupId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return (
+      await api.post(`/api/groups/${groupId}/image`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+    ).data;
+  },
   removeMember: async (groupId, playerId) =>
     api.delete(`/api/groups/${groupId}/members/${playerId}`),
   listRequests: async (groupId) => (await api.get(`/api/groups/${groupId}/requests`)).data,

@@ -1,8 +1,10 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.auth.bootstrap import ensure_sessions_table
 from app.auth.router import router as auth_router
@@ -21,6 +23,9 @@ from app.players.bootstrap import ensure_players_table
 from app.players.router import router as players_router
 
 settings = get_settings()
+
+_UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
+_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @asynccontextmanager
@@ -48,6 +53,8 @@ def create_app() -> FastAPI:
     )
 
     register_exception_handlers(app)
+
+    app.mount("/uploads", StaticFiles(directory=_UPLOADS_DIR), name="uploads")
 
     app.include_router(health_router)
     app.include_router(auth_router)
