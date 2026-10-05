@@ -1909,8 +1909,14 @@ button.lol-group-card {
   border-radius: 10px;
   width: 100%;
   max-width: 380px;
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
   padding: 1.5rem;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+}
+
+.lol-modal--lg {
+  max-width: 640px;
 }
 
 .lol-modal-header {

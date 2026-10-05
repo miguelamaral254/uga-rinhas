@@ -550,6 +550,7 @@ const GroupDetail = () => {
         isOpen={!!selectedMatch}
         onClose={() => setSelectedMatch(null)}
         title="Detalhes da rinha"
+        size="lg"
       >
         {selectedMatch && (
           <>
