@@ -1,18 +1,48 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { playersService } from '../services/playersService';
 import { groupMatchesService } from '../services/groupMatchesService';
 import { LoadingScreen } from '../components/common/LoadingScreen';
+import { MatchRosterEntry } from '../components/matches/MatchRosterEntry';
+import { formatDuration, formatRelativeTime } from '../utils/matchFormat';
 
-const formatDuration = (totalSeconds) => {
-  const minutes = Math.floor(totalSeconds / 60)
-    .toString()
-    .padStart(2, '0');
-  const seconds = Math.floor(totalSeconds % 60)
-    .toString()
-    .padStart(2, '0');
-  return `${minutes}:${seconds}`;
+const DashboardMatchCard = ({ match }) => {
+  const navigate = useNavigate();
+  return (
+    <div
+      className={`lol-match-card ${match.result === 'WIN' ? 'lol-match-card--win' : 'lol-match-card--loss'}`}
+      onClick={() => navigate(`/groups/${match.group_id}`)}
+    >
+      <div className="lol-match-card-meta">
+        <span className="lol-match-card-queue">{match.group_name}</span>
+        <span className="lol-match-card-time">{formatRelativeTime(match.ended_at)}</span>
+        <span className={`lol-match-card-result ${match.result === 'WIN' ? 'lol-win' : 'lol-loss'}`}>
+          {match.result === 'WIN' ? 'Vitória' : 'Derrota'}
+        </span>
+        <span className="lol-match-card-duration">{formatDuration(match.duration_seconds)}</span>
+      </div>
+
+      <div className="lol-match-card-roster">
+        <div className="lol-match-card-roster-col">
+          {match.teammates.map((p) => (
+            <MatchRosterEntry
+              key={p.id}
+              player={{ player_id: p.id, display_name: p.display_name, icon_url: p.profile_icon_url }}
+            />
+          ))}
+        </div>
+        <div className="lol-match-card-roster-col">
+          {match.opponents.map((p) => (
+            <MatchRosterEntry
+              key={p.id}
+              player={{ player_id: p.id, display_name: p.display_name, icon_url: p.profile_icon_url }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const Dashboard = () => {
@@ -157,30 +187,11 @@ const Dashboard = () => {
         {history.recent_matches.length === 0 ? (
           <p className="lol-profile-section-empty">Nenhuma rinha registrada ainda.</p>
         ) : (
-          <table className="lol-match-table">
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Grupo</th>
-                <th>Resultado</th>
-                <th>Duração</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.recent_matches.map((match) => (
-                <tr key={match.match_id}>
-                  <td>{new Date(match.ended_at).toLocaleString('pt-BR')}</td>
-                  <td>
-                    <Link to={`/groups/${match.group_id}`}>{match.group_name}</Link>
-                  </td>
-                  <td className={match.result === 'WIN' ? 'lol-win' : 'lol-loss'}>
-                    {match.result === 'WIN' ? 'Vitória' : 'Derrota'}
-                  </td>
-                  <td>{formatDuration(match.duration_seconds)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="lol-match-card-list">
+            {history.recent_matches.map((match) => (
+              <DashboardMatchCard key={match.match_id} match={match} />
+            ))}
+          </div>
         )}
       </section>
     </div>

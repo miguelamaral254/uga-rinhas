@@ -69,7 +69,7 @@ class GetPlayerMatchHistoryUseCase:
                         result="WIN" if won else "LOSS",
                         duration_seconds=match.duration_seconds or 0,
                         ended_at=match.ended_at,
-                        teammates=[p for p in own_team_live if str(p.id) != player_id_str],
+                        teammates=own_team_live,
                         opponents=other_team_live,
                     )
                 )
